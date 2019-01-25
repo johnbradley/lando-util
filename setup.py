@@ -8,6 +8,7 @@ setup(name='lando-util',
       packages=['lando_util'],
       install_requires=[
           'click==7.0',
+          'Jinja2==2.10',
           'DukeDSClient==2.1.1',
       ],
       zip_safe=False)
