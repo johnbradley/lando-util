@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-      - name: stage-input-data
+      - name: download-help
         image: lando-util:latest
         command:
         - "python"
