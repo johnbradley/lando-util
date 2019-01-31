@@ -2,7 +2,8 @@ import click
 import json
 from ddsc.sdk.client import Client as DukeDSClient
 from ddsc.core.upload import ProjectUpload
-from ddsc.core.remotestore import ProjectNameOrId
+from ddsc.core.remotestore import RemoteStore, ProjectNameOrId
+from ddsc.core.d4s2 import D4S2Project
 
 
 class UploadList(object):
@@ -10,6 +11,10 @@ class UploadList(object):
         data = json.load(cmdfile)
         self.destination = data['destination']
         self.paths = data['paths']
+        share = data.get('share', {})
+        self.share_dds_user_id = share['dds_user_id']
+        self.share_auth_role = share.get('auth_role', 'project_admin')
+        self.share_user_message = share.get('user_message', 'Bespin job results.')
 
 
 def write_results(project_id, outfile):
@@ -19,6 +24,21 @@ def write_results(project_id, outfile):
     })
     outfile.write(contents)
     outfile.close()
+
+
+def share_project(dds_client, share_project_id, upload_list):
+    config = dds_client.dds_connection.config
+    remote_store = RemoteStore(config)
+    remote_project = remote_store.fetch_remote_project_by_id(share_project_id)
+    remote_store.get_project_names()
+    d4s2_project = D4S2Project(config, remote_store,
+                               print_func=print)  # D4S2Project doesn't use print_func for share
+    remote_user = remote_store.fetch_user(upload_list.share_dds_user_id)
+    d4s2_project.share(remote_project,
+                       remote_user,
+                       force_send=True,
+                       auth_role=upload_list.share_auth_role,
+                       user_message=upload_list.share_user_message)
 
 
 @click.command()
@@ -38,6 +58,7 @@ def upload_files(cmdfile, outfile):
         click.echo("Uploading")
         project_upload.run()
         write_results(project.id, outfile)
+        share_project(dds_client, project.id, upload_list)
     else:
         click.echo("Nothing needs to be uploaded.")
 
