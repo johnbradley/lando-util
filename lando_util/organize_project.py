@@ -99,7 +99,7 @@ class Organizer(object):
         # copy files
         shutil.copy(self.settings.cwltool_stdout_path, self.settings.cwltool_stdout_dest_path)
         shutil.copy(self.settings.cwltool_stderr_path, self.settings.cwltool_stderr_dest_path)
-        shutil.copy(self.settings.job_data_path, self.settings.job_data_dest_path)
+        # shutil.copy(self.settings.job_data_path, self.settings.job_data_dest_path)
         shutil.copy(self.settings.workflow_path, self.settings.workflow_dest_path)
         shutil.copy(self.settings.job_order_path, self.settings.job_order_dest_path)
 
