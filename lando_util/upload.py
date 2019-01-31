@@ -12,7 +12,7 @@ class UploadList(object):
         self.destination = data['destination']
         self.paths = data['paths']
         share = data.get('share', {})
-        self.share_dds_user_id = share['dds_user_id']
+        self.share_dds_user_ids = share['dds_user_ids']
         self.share_auth_role = share.get('auth_role', 'project_admin')
         self.share_user_message = share.get('user_message', 'Bespin job results.')
 
@@ -33,12 +33,12 @@ def share_project(dds_client, share_project_id, upload_list):
     remote_store.get_project_names()
     d4s2_project = D4S2Project(config, remote_store,
                                print_func=print)  # D4S2Project doesn't use print_func for share
-    remote_user = remote_store.fetch_user(upload_list.share_dds_user_id)
-    d4s2_project.share(remote_project,
-                       remote_user,
-                       force_send=True,
-                       auth_role=upload_list.share_auth_role,
-                       user_message=upload_list.share_user_message)
+    for dds_user_id in upload_list.share_dds_user_ids:
+        d4s2_project.share(remote_project,
+                           remote_store.fetch_user(dds_user_id),
+                           force_send=True,
+                           auth_role=upload_list.share_auth_role,
+                           user_message=upload_list.share_user_message)
 
 
 @click.command()
