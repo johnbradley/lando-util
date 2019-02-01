@@ -8,8 +8,8 @@ results/           # this directory is uploaded in the store output stage (desti
    docs/
       README         # describes contents of the upload_directory
       logs/
-          cwltool-output.json   #stdout from cwl-runner - json job results
-          cwltool-output.log    #stderr from cwl-runner
+          bespin-workflow-output.json   #stdout from cwl-runner - json job results
+          bespin-workflow-output.log    #stderr from cwl-runner
           job-data.json         # non-cwl job data used to create Bespin-Report.txt
       workflow/
           workflow.cwl            # cwl workflow we will run
@@ -27,8 +27,8 @@ class Settings(object):
     DOCS_DIRNAME = "docs"
     LOGS_DIRNAME = "logs"
     WORKFLOW_DIRNAME = "workflow"
-    CWLTOOL_STDOUT_FILENAME = "cwltool-output.json"
-    CWLTOOL_STDERR_FILENAME = "cwltool-output.log"
+    BESPIN_WORKFLOW_STDOUT_FILENAME = "bespin-workflow-output.json"
+    BESPIN_WORKFLOW_STDERR_FILENAME = "bespin-workflow-output.log"
     JOB_DATA_FILENAME = "job-data.json"
 
     def __init__(self, cmdfile):
@@ -37,8 +37,8 @@ class Settings(object):
         self.workflow_path = data['workflow_path']  # path to the workflow we ran
         self.job_order_path = data['job_order_path']  # path to job order used when running the workflow
         self.job_data_path = data['job_data_path']  # path to data from Bespin about the job
-        self.cwltool_stdout_path = data['cwltool_stdout_path']  # path to stdout created by CWL runner
-        self.cwltool_stderr_path = data['cwltool_stderr_path']  # path to stderr created by CWL runner
+        self.bespin_workflow_stdout_path = data['bespin_workflow_stdout_path']  # path to stdout created by CWL runner
+        self.bespin_workflow_stderr_path = data['bespin_workflow_stderr_path']  # path to stderr created by CWL runner
         self.methods_template = data['methods_template']  # content of jinja template to build Readme.md
 
     @property
@@ -58,12 +58,12 @@ class Settings(object):
         return os.path.join(self.docs_dir, self.LOGS_DIRNAME)
 
     @property
-    def cwltool_stdout_dest_path(self):
-        return os.path.join(self.logs_dir, self.CWLTOOL_STDOUT_FILENAME)
+    def bespin_workflow_stdout_dest_path(self):
+        return os.path.join(self.logs_dir, self.BESPIN_WORKFLOW_STDOUT_FILENAME)
 
     @property
-    def cwltool_stderr_dest_path(self):
-        return os.path.join(self.logs_dir, self.CWLTOOL_STDERR_FILENAME)
+    def bespin_workflow_stderr_dest_path(self):
+        return os.path.join(self.logs_dir, self.BESPIN_WORKFLOW_STDERR_FILENAME)
 
     @property
     def job_data_dest_path(self):
@@ -97,9 +97,9 @@ class Organizer(object):
         self.create_readme_document()
 
         # copy files
-        shutil.copy(self.settings.cwltool_stdout_path, self.settings.cwltool_stdout_dest_path)
-        shutil.copy(self.settings.cwltool_stderr_path, self.settings.cwltool_stderr_dest_path)
-        # shutil.copy(self.settings.job_data_path, self.settings.job_data_dest_path)
+        shutil.copy(self.settings.bespin_workflow_stdout_path, self.settings.bespin_workflow_stdout_dest_path)
+        shutil.copy(self.settings.bespin_workflow_stderr_path, self.settings.bespin_workflow_stderr_dest_path)
+        shutil.copy(self.settings.job_data_path, self.settings.job_data_dest_path)
         shutil.copy(self.settings.workflow_path, self.settings.workflow_dest_path)
         shutil.copy(self.settings.job_order_path, self.settings.job_order_dest_path)
 
