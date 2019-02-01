@@ -20,7 +20,8 @@ class UploadList(object):
 def write_results(project_id, outfile):
     click.echo("Writing project id {} to {}".format(project_id, outfile.name))
     contents = json.dumps({
-        'project_id': project_id
+        'project_id': project_id,
+        'readme_file_id': 'TODO',
     })
     outfile.write(contents)
     outfile.close()
