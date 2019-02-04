@@ -16,11 +16,7 @@ def get_stage_items(cmdfile):
     return items
 
 
-@click.command()
-@click.argument('cmdfile', type=click.File())
-def download_files(cmdfile):
-    dds_client = DukeDSClient()
-    stage_items = get_stage_items(cmdfile)
+def download_files(dds_client, stage_items):
     click.echo("Staging {} items.".format(len(stage_items)))
     for type, source, dest in stage_items:
         parent_directory = os.path.dirname(dest)
@@ -39,5 +35,13 @@ def download_files(cmdfile):
     click.echo("Staging complete.".format(len(stage_items)))
 
 
+@click.command()
+@click.argument('cmdfile', type=click.File())
+def run(cmdfile):
+    dds_client = DukeDSClient()
+    stage_items = get_stage_items(cmdfile)
+    download_files(dds_client, stage_items)
+
+
 if __name__ == '__main__':
-    download_files()
+    run()
