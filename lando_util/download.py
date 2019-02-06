@@ -37,11 +37,11 @@ def download_files(dds_client, stage_items):
 
 @click.command()
 @click.argument('cmdfile', type=click.File())
-def run(cmdfile):
+def main(cmdfile):
     dds_client = DukeDSClient()
     stage_items = get_stage_items(cmdfile)
     download_files(dds_client, stage_items)
 
 
 if __name__ == '__main__':
-    run()
+    main()

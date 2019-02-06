@@ -31,9 +31,7 @@ def share_project(dds_client, share_project_id, upload_list):
     config = dds_client.dds_connection.config
     remote_store = RemoteStore(config)
     remote_project = remote_store.fetch_remote_project_by_id(share_project_id)
-    remote_store.get_project_names()
-    d4s2_project = D4S2Project(config, remote_store,
-                               print_func=print)  # D4S2Project doesn't use print_func for share
+    d4s2_project = D4S2Project(config, remote_store, print_func=print)
     for dds_user_id in upload_list.share_dds_user_ids:
         d4s2_project.share(remote_project,
                            remote_store.fetch_user(dds_user_id),
@@ -42,13 +40,8 @@ def share_project(dds_client, share_project_id, upload_list):
                            user_message=upload_list.share_user_message)
 
 
-@click.command()
-@click.argument('cmdfile', type=click.File('r'))
-@click.argument('outfile', type=click.File('w'))
-def upload_files(cmdfile, outfile):
-    upload_list = UploadList(cmdfile)
+def upload_files(dds_client, upload_list, outfile):
     click.echo("Uploading {} paths to {}.".format(len(upload_list.paths), upload_list.destination))
-    dds_client = DukeDSClient()
     project_name = upload_list.destination
     project = dds_client.create_project(project_name, description=project_name)
     project_upload = ProjectUpload(dds_client.dds_connection.config,
@@ -61,8 +54,18 @@ def upload_files(cmdfile, outfile):
         write_results(project.id, outfile)
         share_project(dds_client, project.id, upload_list)
     else:
-        click.echo("Nothing needs to be uploaded.")
+        project.delete()
+        raise ValueError("Error: No files or folders found to upload.")
+
+
+@click.command()
+@click.argument('cmdfile', type=click.File('r'))
+@click.argument('outfile', type=click.File('w'))
+def main(cmdfile, outfile):
+    dds_client = DukeDSClient()
+    upload_list = UploadList(cmdfile)
+    upload_files(dds_client, upload_list, outfile)
 
 
 if __name__ == '__main__':
-    upload_files()
+    main()
