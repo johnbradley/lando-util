@@ -10,7 +10,7 @@ results/           # this directory is uploaded in the store output stage (desti
       logs/
           bespin-workflow-output.json   #stdout from cwl-runner - json job results
           bespin-workflow-output.log    #stderr from cwl-runner
-          job-data.json         # non-cwl job data used to create Bespin-Report.txt
+          job-data.json                 # non-cwl job data used to create Bespin-Report.txt
       workflow/
           workflow.cwl            # cwl workflow we will run
           workflow.yml            # job order input file
