@@ -28,5 +28,5 @@ python -m lando_util.organize_project <COMMAND_FILE>
 Users must first create a json command file with settings to use when uploading and sharing the output project.
 The command will write out a json file with the resulting DukeDS project id and DukeDS README file id.
 ```
-python -m lando_util.download <COMMAND_FILE> <OUTFILE>
+python -m lando_util.upload <COMMAND_FILE> <OUTFILE>
 ```
