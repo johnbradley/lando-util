@@ -1,8 +1,11 @@
 # lando-util
-Utilities used by lando related to running a workflow
+Utilities used by [k8s.lando](https://github.com/Duke-GCB/lando/blob/master/lando/k8s/README.md) related to running a workflow.
 - download files from DukeDS, URLs, or with hard coded content
 - organize output project directory
 - upload a directory to DukeDS
+
+These utilities are meant to be run inside a k8s container by `k8s.lando`.
+This logic was broken out of [lando_worker](https://github.com/Duke-GCB/lando/tree/master/lando/worker) to be simplier to understand, maintain and replace. The methods to download, organize directories and upload are baked into the `lando_worker` VM, but in the future `lando worker` can be simplified to use these containerized utilties also.
 
 ## Install
 ```
