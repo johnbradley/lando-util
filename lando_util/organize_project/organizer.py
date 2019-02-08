@@ -28,7 +28,7 @@ from lando_util.organize_project.cwlreport import CwlReport, create_workflow_inf
 from lando_util.organize_project.scriptsreadme import ScriptsReadme
 
 
-def write_data_to_file(self, data, filepath):
+def write_data_to_file(data, filepath):
     with open(filepath, 'w') as outfile:
         outfile.write(data)
 
