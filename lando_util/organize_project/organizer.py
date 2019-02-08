@@ -125,7 +125,7 @@ class ProjectData(object):
         self.workflow_info.update_with_job_order(job_order_path=settings.job_order_path)
         self.workflow_info.update_with_job_output(job_output_path=settings.bespin_workflow_stdout_path)
         run_time = "{} minutes".format(settings.bespin_workflow_elapsed_minutes)
-        job_data = {
+        self.job_data = {
             'id': settings.bespin_job_id,
             'started': settings.bespin_workflow_started,
             'finished': settings.bespin_workflow_finished,
@@ -134,7 +134,7 @@ class ProjectData(object):
             'total_file_size_str': self.workflow_info.total_file_size_str(),
             'workflow_methods': self.methods_template
         }
-        self.report = CwlReport(self.workflow_info, job_data)
+        self.report = CwlReport(self.workflow_info, self.job_data)
         self.scripts_readme = ScriptsReadme(settings.workflow_path, settings.job_order_path)
 
 
