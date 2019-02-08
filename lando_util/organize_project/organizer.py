@@ -177,7 +177,7 @@ class Organizer(object):
         # create docs/logs job data files
         write_data_to_file(
             filepath=self.settings.job_data_dest_path,
-            data=self.project_data.job_data
+            data=json.dumps(self.project_data.job_data)
         )
 
         # copy docs/scripts cwl workflow file
