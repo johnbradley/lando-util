@@ -1,7 +1,16 @@
 from unittest import TestCase
-from unittest.mock import patch, Mock, call
-from lando_util.organize_project.organizer import Settings, ProjectData, Organizer
+from unittest.mock import patch, Mock, call, mock_open
+from lando_util.organize_project.organizer import write_data_to_file, Settings, ProjectData, Organizer
 import json
+
+
+class TestOrganizerFuncs(TestCase):
+    def test_write_data_to_file(self):
+        mocked_open = mock_open()
+        with patch('builtins.open', mocked_open, create=True):
+            write_data_to_file(data='somedata', filepath='/tmp/somepath.txt')
+        mocked_open.assert_called_with('/tmp/somepath.txt', 'w')
+        mocked_open.return_value.write.assert_called_with('somedata')
 
 
 class TestSettings(TestCase):
