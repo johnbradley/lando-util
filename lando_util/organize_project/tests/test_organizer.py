@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock, call
 from lando_util.organize_project.organizer import Settings, ProjectData, Organizer
+import json
 
 
 class TestSettings(TestCase):
@@ -110,6 +111,9 @@ class TestOrganizer(TestCase):
         mock_settings.job_data = {}
         mock_project_data.return_value = Mock(
             methods_template='#Markdown',
+            job_data={
+                'id': '42',
+            }
         )
 
         organizer = Organizer(mock_settings)
@@ -139,6 +143,6 @@ class TestOrganizer(TestCase):
                  filepath=mock_settings.scripts_readme_md_dest_path),
             call(data=project_data.scripts_readme.render_html.return_value,
                  filepath=mock_settings.scripts_readme_html_dest_path),
-            call(data=project_data.job_data,
+            call(data=json.dumps({"id": "42"}),
                  filepath=mock_settings.job_data_dest_path),
         ])
