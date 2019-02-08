@@ -294,24 +294,3 @@ def parse_yaml_or_json(path):
     with codecs.open(path, mode='r', encoding='utf-8') as infile:
         doc = yaml.load(infile)
     return doc
-
-
-def main():
-    """
-    Method to allow easy testing of report contents.
-    """
-    if len(sys.argv) != 5:
-        print("usage: python lando/worker/cwlreport.py <CWL_WORKFLOW_FILENAME> <CWL_JOB_ORDER_FILENAME> "
-              "<CWLTOOL_OUTPUT_FILENAME> <JOB_DATA_FILENAME>")
-        sys.exit(1)
-    else:
-        workflow_info = create_workflow_info(workflow_path=sys.argv[1])
-        workflow_info.update_with_job_order(job_order_path=sys.argv[2])
-        workflow_info.update_with_job_output(job_output_path=sys.argv[3])
-        job_data = parse_yaml_or_json(path=sys.argv[4])
-        report = CwlReport(workflow_info, job_data)
-        print(report.render_markdown())
-
-
-if __name__ == "__main__":
-    main()
