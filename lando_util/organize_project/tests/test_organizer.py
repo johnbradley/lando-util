@@ -92,6 +92,7 @@ class TestProjectData(TestCase):
             'workflow_methods': '#Markdown'
         }
         mock_cwl_report.assert_called_with(project_data.workflow_info, expected_job_data)
+        self.assertEqual(project_data.job_data, expected_job_data)
 
         self.assertEqual(project_data.scripts_readme, mock_scripts_readme.return_value)
         mock_scripts_readme.assert_called_with('/input/sort.cwl', '/data/job_order.json')
