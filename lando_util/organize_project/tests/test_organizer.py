@@ -82,7 +82,6 @@ class TestProjectData(TestCase):
 
         project_data = ProjectData(mock_settings)
 
-        self.assertEqual(project_data.methods_template, mock_settings.methods_template)
         self.assertEqual(project_data.workflow_info, mock_create_workflow_info.return_value)
         mock_workflow_info = mock_create_workflow_info.return_value
         mock_workflow_info.update_with_job_order.assert_called_with(job_order_path='/data/job_order.json')
@@ -96,7 +95,6 @@ class TestProjectData(TestCase):
             'run_time': '120 minutes',
             'num_output_files': 13,
             'total_file_size_str': '20 GiB',
-            'workflow_methods': '#Markdown'
         }
         mock_readme_report.assert_called_with(project_data.workflow_info, expected_job_data)
         self.assertEqual(project_data.job_data, expected_job_data)

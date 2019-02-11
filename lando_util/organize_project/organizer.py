@@ -101,7 +101,6 @@ class Settings(object):
 
 class ProjectData(object):
     def __init__(self, settings):
-        self.methods_template = settings.methods_template
         self.workflow_info = create_workflow_info(workflow_path=settings.workflow_path)
         self.workflow_info.update_with_job_order(job_order_path=settings.job_order_path)
         self.workflow_info.update_with_job_output(job_output_path=settings.bespin_workflow_stdout_path)
@@ -113,7 +112,6 @@ class ProjectData(object):
             'run_time': run_time,
             'num_output_files': self.workflow_info.count_output_files(),
             'total_file_size_str': self.workflow_info.total_file_size_str(),
-            'workflow_methods': self.methods_template
         }
         self.readme_report = ReadmeReport(self.workflow_info, self.job_data)
 
