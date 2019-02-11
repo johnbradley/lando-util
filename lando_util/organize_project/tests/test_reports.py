@@ -5,7 +5,7 @@ https://github.com/Duke-GCB/lando/blob/cfb68f50298fbdff3d7df4db6c800e73063d8d25/
 """
 
 from unittest import TestCase
-from lando_util.organize_project.cwlreport import CwlReport, get_documentation_str, create_workflow_info
+from lando_util.organize_project.reports import ReadmeReport, get_documentation_str, create_workflow_info
 from unittest.mock import patch, MagicMock, mock_open, call
 
 SAMPLE_CWL_MAIN_DATA = {
@@ -164,7 +164,7 @@ SAMPLE_JOB_OUTPUT = {
 }
 
 
-class TestCwlReport(TestCase):
+class TestReadmeReport(TestCase):
     def test_render(self):
         """
         The report renders workflow and job data into a template
@@ -172,14 +172,14 @@ class TestCwlReport(TestCase):
         template = '{{workflow.data}} {{job.job_id}}'
         workflow_info = MagicMock(data='test')
         job_data = MagicMock(job_id=123)
-        report = CwlReport(workflow_info, job_data, template)
+        report = ReadmeReport(workflow_info, job_data, template)
         self.assertEqual('test 123', report.render_markdown())
 
     def test_save_converts_to_html(self):
         template = '{{workflow.data}} {{job.job_id}}'
         workflow_info = MagicMock(data='test')
         job_data = MagicMock(job_id=123)
-        report = CwlReport(workflow_info, job_data, template)
+        report = ReadmeReport(workflow_info, job_data, template)
         report.render_html()
         self.assertEqual("<p>test 123</p>", report.render_html())
 
@@ -187,7 +187,7 @@ class TestCwlReport(TestCase):
         template = '{{workflow.data}}qüü{{job.job_id}}'
         workflow_info = MagicMock(data='ää')
         job_data = MagicMock(job_id='üä')
-        report = CwlReport(workflow_info, job_data, template)
+        report = ReadmeReport(workflow_info, job_data, template)
         rendered = report.render_html()
         self.assertEqual('<p>ääqüüüä</p>', rendered)
 
@@ -201,14 +201,14 @@ class TestCwlReportUtilities(TestCase):
         self.assertEqual("123", get_documentation_str({"id": "123"}))
         self.assertEqual(None, get_documentation_str({}))
 
-    @patch("lando_util.organize_project.cwlreport.parse_yaml_or_json")
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_create_workflow_info_bad_data(self, mock_parse_yaml_or_json):
         mock_parse_yaml_or_json.return_value = {}
         with self.assertRaises(ValueError) as err:
             create_workflow_info('/tmp/fakepath.cwl')
         self.assertEqual("Unable to find #main in /tmp/fakepath.cwl", str(err.exception))
 
-    @patch("lando_util.organize_project.cwlreport.parse_yaml_or_json")
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_create_workflow_info_with_top_level_graph(self, mock_parse_yaml_or_json):
         mock_parse_yaml_or_json.return_value = {
             "$graph": [
@@ -219,7 +219,7 @@ class TestCwlReportUtilities(TestCase):
         self.assertEqual(2, len(workflow.input_params))
         self.assertEqual(4, len(workflow.output_data))
 
-    @patch("lando_util.organize_project.cwlreport.parse_yaml_or_json")
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_create_workflow_info_with_no_graph(self, mock_parse_yaml_or_json):
         mock_parse_yaml_or_json.return_value = SAMPLE_CWL_MAIN_DATA
         workflow = create_workflow_info('/tmp/fakepath.cwl')
@@ -228,7 +228,7 @@ class TestCwlReportUtilities(TestCase):
 
 
 class TestWorkflowInfo(TestCase):
-    @patch("lando_util.organize_project.cwlreport.parse_yaml_or_json")
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_all_parts(self, mock_parse_yaml_or_json):
         mock_parse_yaml_or_json.return_value = SAMPLE_CWL_MAIN_DATA
         workflow = create_workflow_info('/tmp/fake_packed_workflow.cwl')
@@ -277,7 +277,7 @@ class TestWorkflowInfo(TestCase):
         self.assertEqual("SA03567-dedup.bai", output_data.files[3].filename)
         self.assertEqual('12.85 GB', workflow.total_file_size_str())
 
-    @patch("lando_util.organize_project.cwlreport.parse_yaml_or_json")
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_extracts_path_in_pair_input_object(self, mock_parse_yaml_or_json):
         mock_parse_yaml_or_json.return_value = SAMPLE_WORKFLOW_PAIR_INPUT
         workflow = create_workflow_info('/tmp/fake_packed_workflow.cwl')

@@ -5,14 +5,13 @@ https://github.com/Duke-GCB/lando/blob/075b08e9ae1801fe25ddeeb49ef43a0c968a5bcf/
 """
 
 import os
-import sys
 import yaml
 import jinja2
 import humanfriendly
 import markdown
 import codecs
 
-TEMPLATE = """
+README_TEMPLATE = """
 # Summary
 
 Job: {{ workflow.documentation }}
@@ -21,32 +20,6 @@ Started: {{ job.started }}
 Finished: {{ job.finished }}
 Run time: {{ job.run_time }}
 Output: {{ job.num_output_files }} files ({{ job.total_file_size_str }})
-
-{{ job.workflow_methods }}
-
-# Input
-{% for param in workflow.input_params %}
-{{ param.documentation }}
-{{ param.value }}
-
-{% endfor %}
-
-# Results
-{% for item in workflow.output_data %}
-{{ item.documentation }}
-  {% for file in item.files %}
-{{ file.filename }}  checksum:{{ file.checksum}}  size:{{ file.size }}
-  {% endfor %}
-{% endfor %}
-
-# Reproducing
-
-Retrieve all data and update {{ workflow.job_order_filename }} settings for where you put them.
-Install cwltool
-Run this command:
-cwtool {{ workflow.workflow_filename }} {{ workflow.job_order_filename }}
-
-You can compare the output from this tool against {{ workflow.job_output_filename }}.
 """
 
 
@@ -72,17 +45,17 @@ class BaseReport(object):
         return markdown.markdown(self.render_markdown())
 
 
-class CwlReport(BaseReport):
+class ReadmeReport(BaseReport):
     """
     Report detailing inputs and outputs of a cwl workflow that has been run.
     """
-    def __init__(self, workflow_info, job_data, template_str=TEMPLATE):
+    def __init__(self, workflow_info, job_data, template_str=README_TEMPLATE):
         """
         :param workflow_info: WorkflowInfo: info derived from cwl input/output files
         :param job_data: dict: data used in report from non-cwl sources
         :param template_str: str: template to use for rendering
         """
-        super(CwlReport, self).__init__(template_str)
+        super(ReadmeReport, self).__init__(template_str)
         self.workflow_info = workflow_info
         self.job_data = job_data
 
@@ -250,7 +223,7 @@ class InputParam(object):
         :param value: str: user facing value
         """
         if self.value:
-            raise "Duplicate value for {} : {}"
+            raise "Duplicate value for {}".format(self.name)
         self.value = value
 
 

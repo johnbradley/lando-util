@@ -32,7 +32,6 @@ class TestSettings(TestCase):
         mock_json.load.return_value = self.settings_dict
         mock_cmdfile = Mock()
         settings = Settings(mock_cmdfile)
-        self.assertEqual(settings.methods_dest_path, 'somedir/Methods.html')
         self.assertEqual(settings.docs_dir, 'somedir/docs')
         self.assertEqual(settings.readme_md_dest_path, 'somedir/docs/README.md')
         self.assertEqual(settings.readme_html_dest_path, 'somedir/docs/README.html')
@@ -66,9 +65,8 @@ class TestSettings(TestCase):
 
 class TestProjectData(TestCase):
     @patch('lando_util.organize_project.organizer.create_workflow_info')
-    @patch('lando_util.organize_project.organizer.CwlReport')
-    @patch('lando_util.organize_project.organizer.ScriptsReadme')
-    def test_constructor(self, mock_scripts_readme, mock_cwl_report, mock_create_workflow_info):
+    @patch('lando_util.organize_project.organizer.ReadmeReport')
+    def test_constructor(self, mock_readme_report, mock_create_workflow_info):
         mock_settings = Mock(
             bespin_job_id='92',
             bespin_workflow_started='2019-02-07T12:30',
@@ -90,7 +88,7 @@ class TestProjectData(TestCase):
         mock_workflow_info.update_with_job_order.assert_called_with(job_order_path='/data/job_order.json')
         mock_workflow_info.update_with_job_output.assert_called_with(job_output_path='/output/workflow_stdout.json')
 
-        self.assertEqual(project_data.report, mock_cwl_report.return_value)
+        self.assertEqual(project_data.readme_report, mock_readme_report.return_value)
         expected_job_data = {
             'id': '92',
             'started': '2019-02-07T12:30',
@@ -100,11 +98,8 @@ class TestProjectData(TestCase):
             'total_file_size_str': '20 GiB',
             'workflow_methods': '#Markdown'
         }
-        mock_cwl_report.assert_called_with(project_data.workflow_info, expected_job_data)
+        mock_readme_report.assert_called_with(project_data.workflow_info, expected_job_data)
         self.assertEqual(project_data.job_data, expected_job_data)
-
-        self.assertEqual(project_data.scripts_readme, mock_scripts_readme.return_value)
-        mock_scripts_readme.assert_called_with('/input/sort.cwl', '/data/job_order.json')
 
 
 class TestOrganizer(TestCase):
@@ -143,16 +138,10 @@ class TestOrganizer(TestCase):
         ])
         project_data = mock_project_data.return_value
         mock_write_data_to_file.assert_has_calls([
-            call(data='<h1>Markdown</h1>',
-                 filepath=mock_settings.methods_dest_path),
-            call(data=project_data.report.render_markdown.return_value,
+            call(data=project_data.readme_report.render_markdown.return_value,
                  filepath=mock_settings.readme_md_dest_path),
-            call(data=project_data.report.render_html.return_value,
+            call(data=project_data.readme_report.render_html.return_value,
                  filepath=mock_settings.readme_html_dest_path),
-            call(data=project_data.scripts_readme.render_markdown.return_value,
-                 filepath=mock_settings.scripts_readme_md_dest_path),
-            call(data=project_data.scripts_readme.render_html.return_value,
-                 filepath=mock_settings.scripts_readme_html_dest_path),
             call(data=json.dumps({"id": "42"}),
                  filepath=mock_settings.job_data_dest_path),
         ])

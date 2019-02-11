@@ -3,14 +3,11 @@ Organizes an output project before uploading to a remote data store.
 
 Directory structure:
 results/           # this directory is uploaded in the store output stage (destination_dir in config)
-   Methods.html    # document detailing methods used in workflow
    ...output files from workflow
    docs/
       README.md
       README.html
       scripts/
-          README.md
-          README.html
           <workflow name>.cwl
           job-<jobid>-input.json
       logs/
@@ -23,9 +20,7 @@ import json
 import shutil
 import click
 import dateutil.parser
-import markdown
-from lando_util.organize_project.cwlreport import CwlReport, create_workflow_info
-from lando_util.organize_project.scriptsreadme import ScriptsReadme
+from lando_util.organize_project.reports import ReadmeReport, create_workflow_info
 
 
 def write_data_to_file(data, filepath):
@@ -34,7 +29,6 @@ def write_data_to_file(data, filepath):
 
 
 class Settings(object):
-    METHODS_FILENAME = "Methods.html"
     README_MD_FILENAME = "README.md"
     README_HTML_FILENAME = "README.html"
     DOCS_DIRNAME = "docs"
@@ -54,11 +48,6 @@ class Settings(object):
         self.bespin_workflow_stderr_path = data['bespin_workflow_stderr_path']  # path to stderr created by CWL runner
         self.bespin_workflow_started = data.get('bespin_workflow_started', '')  # workflow started running iso date
         self.bespin_workflow_finished = data.get('bespin_workflow_finished', '')  # workflow completed running iso date
-        self.methods_template = data.get('methods_template')  # optional jinja template to build methods document
-
-    @property
-    def methods_dest_path(self):
-        return os.path.join(self.destination_dir, self.METHODS_FILENAME)
 
     @property
     def docs_dir(self):
@@ -101,14 +90,6 @@ class Settings(object):
         return os.path.join(self.scripts_dir, os.path.basename(self.job_order_path))
 
     @property
-    def scripts_readme_md_dest_path(self):
-        return os.path.join(self.scripts_dir, self.README_MD_FILENAME)
-
-    @property
-    def scripts_readme_html_dest_path(self):
-        return os.path.join(self.scripts_dir, self.README_HTML_FILENAME)
-
-    @property
     def bespin_workflow_elapsed_minutes(self):
         if self.bespin_workflow_started and self.bespin_workflow_finished:
             started = dateutil.parser.parse(self.bespin_workflow_started)
@@ -134,8 +115,7 @@ class ProjectData(object):
             'total_file_size_str': self.workflow_info.total_file_size_str(),
             'workflow_methods': self.methods_template
         }
-        self.report = CwlReport(self.workflow_info, self.job_data)
-        self.scripts_readme = ScriptsReadme(settings.workflow_path, settings.job_order_path)
+        self.readme_report = ReadmeReport(self.workflow_info, self.job_data)
 
 
 class Organizer(object):
@@ -149,31 +129,16 @@ class Organizer(object):
         os.makedirs(name=self.settings.scripts_dir, exist_ok=True)
         os.makedirs(name=self.settings.logs_dir, exist_ok=True)
 
-        # create top level Methods HTML document
-        write_data_to_file(
-            filepath=self.settings.methods_dest_path,
-            data=markdown.markdown(self.project_data.methods_template)
-        )
-
         # create docs README files markdown and HTML
         write_data_to_file(
             filepath=self.settings.readme_md_dest_path,
-            data=self.project_data.report.render_markdown()
+            data=self.project_data.readme_report.render_markdown()
         )
         write_data_to_file(
             filepath=self.settings.readme_html_dest_path,
-            data=self.project_data.report.render_html()
+            data=self.project_data.readme_report.render_html()
         )
 
-        # create docs/scripts README files markdown and HTML
-        write_data_to_file(
-            filepath=self.settings.scripts_readme_md_dest_path,
-            data=self.project_data.scripts_readme.render_markdown()
-        )
-        write_data_to_file(
-            filepath=self.settings.scripts_readme_html_dest_path,
-            data=self.project_data.scripts_readme.render_html()
-        )
         # create docs/logs job data files
         write_data_to_file(
             filepath=self.settings.job_data_dest_path,
