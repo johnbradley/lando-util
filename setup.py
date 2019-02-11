@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='lando-util',
-      version='0.1',
+      version='0.2.0',
       description='Test',
       url='http://github.com/Duke-GCB/lando-util',
       license='MIT',
@@ -10,5 +10,9 @@ setup(name='lando-util',
           'click==7.0',
           'Jinja2==2.10',
           'DukeDSClient==2.1.1',
+          'humanfriendly==2.4',
+          'python-dateutil==2.6.0',
+          'Markdown==2.6.9',
+          'PyYAML==3.12',
       ],
       zip_safe=False)
