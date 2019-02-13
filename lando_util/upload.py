@@ -17,9 +17,10 @@ class UploadList(object):
         self.share_user_message = share.get('user_message', 'Bespin job results.')
 
 
-def write_results_env_vars(project_id, readme_file_id, outfile):
-    click.echo("Writing project id {} to {}".format(project_id, outfile.name))
-    contents = "project_id={}\nreadme_file_id={}\n".format(project_id, readme_file_id)
+def create_annotate_project_details_script(project_id, readme_file_id, outfile):
+    click.echo("Writing annotate project details script project_id:{} readme_file_id:{} to {}".format(
+        project_id, readme_file_id, outfile.name))
+    contents = "kubectl annotate pod $MY_POD_NAME project_id={} readme_file_id={}".format(project_id, readme_file_id)
     outfile.write(contents)
     outfile.close()
 
@@ -48,7 +49,7 @@ def upload_files(dds_client, upload_list, outfile):
     if project_upload.needs_to_upload():
         click.echo("Uploading")
         project_upload.run()
-        write_results_env_vars(project.id, 'TODO', outfile)
+        create_annotate_project_details_script(project.id, 'TODO', outfile)
         share_project(dds_client, project.id, upload_list)
     else:
         project.delete()

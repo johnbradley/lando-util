@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 from unittest.mock import patch, Mock, call
-from lando_util.upload import UploadList, write_results_env_vars, share_project, upload_files
+from lando_util.upload import UploadList, create_annotate_project_details_script, share_project, upload_files
 
 
 class TestUploadList(TestCase):
@@ -40,10 +40,10 @@ class TestUploadList(TestCase):
 
 
 class TestUploadFunctions(TestCase):
-    def test_write_results_env_vars(self):
+    def test_create_annotate_project_details_script(self):
         mock_outfile = Mock()
-        write_results_env_vars(project_id='123', readme_file_id='456', outfile=mock_outfile)
-        mock_outfile.write.assert_called_with('project_id=123\nreadme_file_id=456\n')
+        create_annotate_project_details_script(project_id='123', readme_file_id='456', outfile=mock_outfile)
+        mock_outfile.write.assert_called_with('kubectl annotate pod $MY_POD_NAME project_id=123 readme_file_id=456')
 
     @patch('lando_util.upload.RemoteStore')
     @patch('lando_util.upload.D4S2Project')
@@ -69,10 +69,11 @@ class TestUploadFunctions(TestCase):
         ])
 
     @patch("lando_util.upload.ProjectUpload")
-    @patch("lando_util.upload.write_results_env_vars")
+    @patch("lando_util.upload.create_annotate_project_details_script")
     @patch("lando_util.upload.share_project")
     @patch("lando_util.upload.click")
-    def test_upload_files(self, mock_click, mock_share_project, mock_write_results_env_vars, mock_project_upload):
+    def test_upload_files(self, mock_click, mock_share_project, mock_create_annotate_project_details_scripts,
+                          mock_project_upload):
         mock_dds_client = Mock()
         mock_upload_list = Mock(
             destination="myProject", paths=["/data/results"],
@@ -92,14 +93,14 @@ class TestUploadFunctions(TestCase):
             call('There are 2 files to upload.'),
             call('Uploading')])
         mock_dds_client.create_project.assert_called_with('myProject', description='myProject')
-        mock_write_results_env_vars.assert_called_with('123', 'TODO', mock_outfile)
+        mock_create_annotate_project_details_scripts.assert_called_with('123', 'TODO', mock_outfile)
         mock_share_project.assert_called_with(mock_dds_client, '123', mock_upload_list)
 
     @patch("lando_util.upload.ProjectUpload")
-    @patch("lando_util.upload.write_results_env_vars")
+    @patch("lando_util.upload.create_annotate_project_details_script")
     @patch("lando_util.upload.share_project")
     @patch("lando_util.upload.click")
-    def test_upload_files_no_data(self, mock_click, mock_share_project, mock_write_results_env_vars,
+    def test_upload_files_no_data(self, mock_click, mock_share_project, mock_create_annotate_project_details_script,
                                   mock_project_upload):
         mock_dds_client = Mock()
         mock_upload_list = Mock(
@@ -122,5 +123,5 @@ class TestUploadFunctions(TestCase):
             call('There are 0 files to upload.')])
         mock_dds_client.create_project.assert_called_with('myProject', description='myProject')
         mock_dds_client.create_project.return_value.delete.assert_called_with()
-        mock_write_results_env_vars.assert_not_called()
+        mock_create_annotate_project_details_script.assert_not_called()
         mock_share_project.assert_not_called()
