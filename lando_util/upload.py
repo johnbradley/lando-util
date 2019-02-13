@@ -17,12 +17,9 @@ class UploadList(object):
         self.share_user_message = share.get('user_message', 'Bespin job results.')
 
 
-def write_results(project_id, outfile):
+def write_results_env_vars(project_id, readme_file_id, outfile):
     click.echo("Writing project id {} to {}".format(project_id, outfile.name))
-    contents = json.dumps({
-        'project_id': project_id,
-        'readme_file_id': 'TODO',
-    })
+    contents = "project_id={}\nreadme_file_id={}\n".format(project_id, readme_file_id)
     outfile.write(contents)
     outfile.close()
 
@@ -51,7 +48,7 @@ def upload_files(dds_client, upload_list, outfile):
     if project_upload.needs_to_upload():
         click.echo("Uploading")
         project_upload.run()
-        write_results(project.id, outfile)
+        write_results_env_vars(project.id, 'TODO', outfile)
         share_project(dds_client, project.id, upload_list)
     else:
         project.delete()
