@@ -9,6 +9,7 @@ class TestUploadList(TestCase):
     def test_constructor_minimal_data(self, mock_json):
         mock_json.load.return_value = {
             "destination": "myproject",
+            "readme_file_path": "results/docs/README.md",
             "paths": ["/data/results"],
             "share": {
                 "dds_user_ids": ["123","456"]

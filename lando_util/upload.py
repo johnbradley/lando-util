@@ -10,7 +10,7 @@ class UploadList(object):
     def __init__(self, cmdfile):
         data = json.load(cmdfile)
         self.destination = data['destination']
-        self.readme_file_path = data.get['readme_file_path']
+        self.readme_file_path = data['readme_file_path']
         self.paths = data['paths']
         share = data.get('share', {})
         self.share_dds_user_ids = share['dds_user_ids']
