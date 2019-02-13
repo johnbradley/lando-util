@@ -82,6 +82,9 @@ class TestUploadFunctions(TestCase):
         mock_outfile = Mock()
         mock_project = Mock()
         mock_project.id = '123'
+        mock_readme_file = Mock()
+        mock_readme_file.id = '456'
+        mock_project.get_child_for_path.return_value = mock_readme_file
         mock_dds_client.create_project.return_value = mock_project
         mock_project_upload.return_value.needs_to_upload.return_value = True
         mock_project_upload.return_value.get_differences_summary.return_value = 'There are 2 files to upload.'
@@ -93,8 +96,9 @@ class TestUploadFunctions(TestCase):
             call('There are 2 files to upload.'),
             call('Uploading')])
         mock_dds_client.create_project.assert_called_with('myProject', description='myProject')
-        mock_create_annotate_project_details_scripts.assert_called_with('123', 'TODO', mock_outfile)
+        mock_create_annotate_project_details_scripts.assert_called_with('123', '456', mock_outfile)
         mock_share_project.assert_called_with(mock_dds_client, '123', mock_upload_list)
+        mock_project.get_child_for_path.assert_called_with('results/docs/README.md')
 
     @patch("lando_util.upload.ProjectUpload")
     @patch("lando_util.upload.create_annotate_project_details_script")
