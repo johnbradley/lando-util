@@ -5,13 +5,12 @@ from ddsc.core.upload import ProjectUpload
 from ddsc.core.remotestore import RemoteStore, ProjectNameOrId
 from ddsc.core.d4s2 import D4S2Project
 
-README_FILE_LOCATION = 'results/docs/README.md'
-
 
 class UploadList(object):
     def __init__(self, cmdfile):
         data = json.load(cmdfile)
         self.destination = data['destination']
+        self.readme_file_path = data.get['readme_file_path']
         self.paths = data['paths']
         share = data.get('share', {})
         self.share_dds_user_ids = share['dds_user_ids']
@@ -51,7 +50,7 @@ def upload_files(dds_client, upload_list, outfile):
     if project_upload.needs_to_upload():
         click.echo("Uploading")
         project_upload.run()
-        readme_file = project.get_child_for_path(README_FILE_LOCATION)
+        readme_file = project.get_child_for_path(upload_list.readme_file_path)
         create_annotate_project_details_script(project.id, readme_file.id, outfile)
         share_project(dds_client, project.id, upload_list)
     else:

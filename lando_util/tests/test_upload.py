@@ -26,6 +26,7 @@ class TestUploadList(TestCase):
     def test_constructor_optional_values(self, mock_json):
         mock_json.load.return_value = {
             "destination": "myproject",
+            "readme_file_path": "results/docs/README.md",
             "paths": ["/data/results"],
             "share": {
                 "dds_user_ids": ["123","456"],
@@ -79,6 +80,7 @@ class TestUploadFunctions(TestCase):
             destination="myProject", paths=["/data/results"],
             share_auth_role='project_admin', share_user_message='Hey')
         mock_upload_list.share_dds_user_ids = ['456', '789']
+        mock_upload_list.readme_file_path = 'somepath.md'
         mock_outfile = Mock()
         mock_project = Mock()
         mock_project.id = '123'
@@ -98,7 +100,7 @@ class TestUploadFunctions(TestCase):
         mock_dds_client.create_project.assert_called_with('myProject', description='myProject')
         mock_create_annotate_project_details_scripts.assert_called_with('123', '456', mock_outfile)
         mock_share_project.assert_called_with(mock_dds_client, '123', mock_upload_list)
-        mock_project.get_child_for_path.assert_called_with('results/docs/README.md')
+        mock_project.get_child_for_path.assert_called_with('somepath.md')
 
     @patch("lando_util.upload.ProjectUpload")
     @patch("lando_util.upload.create_annotate_project_details_script")
