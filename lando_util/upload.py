@@ -6,7 +6,7 @@ from ddsc.core.remotestore import RemoteStore, ProjectNameOrId
 from ddsc.core.d4s2 import D4S2Project
 
 
-class UploadList(object):
+class Settings(object):
     def __init__(self, cmdfile):
         data = json.load(cmdfile)
         self.destination = data['destination']
@@ -18,53 +18,65 @@ class UploadList(object):
         self.share_user_message = share.get('user_message', 'Bespin job results.')
 
 
-def create_annotate_project_details_script(project_id, readme_file_id, outfile):
-    click.echo("Writing annotate project details script project_id:{} readme_file_id:{} to {}".format(
-        project_id, readme_file_id, outfile.name))
-    contents = "kubectl annotate pod $MY_POD_NAME project_id={} readme_file_id={}".format(project_id, readme_file_id)
-    outfile.write(contents)
-    outfile.close()
+class NothingToUploadException(Exception):
+    pass
 
 
-def share_project(dds_client, share_project_id, upload_list):
-    config = dds_client.dds_connection.config
-    remote_store = RemoteStore(config)
-    remote_project = remote_store.fetch_remote_project_by_id(share_project_id)
-    d4s2_project = D4S2Project(config, remote_store, print_func=print)
-    for dds_user_id in upload_list.share_dds_user_ids:
-        d4s2_project.share(remote_project,
-                           remote_store.fetch_user(dds_user_id),
-                           force_send=True,
-                           auth_role=upload_list.share_auth_role,
-                           user_message=upload_list.share_user_message)
+class UploadUtil(object):
+    def __init__(self, cmdfile):
+        self.settings = Settings(cmdfile)
+        self.dds_client = DukeDSClient()
+        self.dds_config = self.dds_client.dds_connection.config
 
+    def create_project(self):
+        project_name = self.settings.destination
+        return self.dds_client.create_project(project_name, description=project_name)
 
-def upload_files(dds_client, upload_list, outfile):
-    click.echo("Uploading {} paths to {}.".format(len(upload_list.paths), upload_list.destination))
-    project_name = upload_list.destination
-    project = dds_client.create_project(project_name, description=project_name)
-    project_upload = ProjectUpload(dds_client.dds_connection.config,
-                                   ProjectNameOrId.create_from_project_id(project.id),
-                                   upload_list.paths)
-    click.echo(project_upload.get_differences_summary())
-    if project_upload.needs_to_upload():
-        click.echo("Uploading")
-        project_upload.run()
-        readme_file = project.get_child_for_path(upload_list.readme_file_path)
-        create_annotate_project_details_script(project.id, readme_file.id, outfile)
-        share_project(dds_client, project.id, upload_list)
-    else:
-        project.delete()
-        raise ValueError("Error: No files or folders found to upload.")
+    def upload_files(self, project):
+        project_upload = ProjectUpload(self.dds_config,
+                                       ProjectNameOrId.create_from_project_id(project.id),
+                                       self.settings.paths)
+        click.echo(project_upload.get_differences_summary())
+        if project_upload.needs_to_upload():
+            click.echo("Uploading")
+            project_upload.run()
+        else:
+            raise NothingToUploadException("Error: No files or folders found to upload.")
+
+    def share_project(self, project):
+        remote_store = RemoteStore(self.dds_config)
+        remote_project = remote_store.fetch_remote_project_by_id(project.id)
+        d4s2_project = D4S2Project(self.dds_config, remote_store, print_func=print)
+        for dds_user_id in self.settings.share_dds_user_ids:
+            d4s2_project.share(remote_project,
+                               remote_store.fetch_user(dds_user_id),
+                               force_send=True,
+                               auth_role=self.settings.share_auth_role,
+                               user_message=self.settings.share_user_message)
+
+    def create_annotate_project_details_script(self, project, outfile):
+        readme_file = project.get_child_for_path(self.settings.readme_file_path)
+        click.echo("Writing annotate project details script project_id:{} readme_file_id:{} to {}".format(
+            project.id, readme_file.id, outfile.name))
+        contents = "kubectl annotate pod $MY_POD_NAME " \
+                   "project_id={} readme_file_id={}".format(project.id, readme_file.id)
+        outfile.write(contents)
+        outfile.close()
 
 
 @click.command()
 @click.argument('cmdfile', type=click.File('r'))
 @click.argument('outfile', type=click.File('w'))
 def main(cmdfile, outfile):
-    dds_client = DukeDSClient()
-    upload_list = UploadList(cmdfile)
-    upload_files(dds_client, upload_list, outfile)
+    util = UploadUtil(cmdfile)
+    project = util.create_project()
+    try:
+        util.upload_files(project)
+        util.share_project(project)
+        util.create_annotate_project_details_script(project, outfile)
+    except NothingToUploadException:
+        project.delete()
+        raise
 
 
 if __name__ == '__main__':
