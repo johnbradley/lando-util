@@ -3,7 +3,7 @@ orbs:
     executors:
       default:
         docker:
-          - image: circleci/python:3.7
+          - image: circleci/python:3.6
     commands:
       update_venv:
         steps:
