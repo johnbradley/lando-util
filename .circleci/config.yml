@@ -6,6 +6,11 @@ orbs:
           - image: circleci/python:3.6
     commands:
       update_venv:
+        parameters:
+          venv_checksum_filename:
+            description: Name of the file we checksum to save venv cache
+            type: string
+            default: setup.py
         steps:
            - restore_cache:
                key: dependency-cache-{{ checksum "setup.py" }}
@@ -19,7 +24,7 @@ orbs:
                key: dependency-cache-{{ checksum "setup.py" }}
                paths:
                  - "venv"
-      run_tests:
+      run_setup_tests:
         steps:
           - run:
               command: |
@@ -27,10 +32,16 @@ orbs:
                 python setup.py test
     jobs:
       pytest:
+        parameters:
+          venv_checksum_filename:
+            description: Name of the file we checksum to save venv cache
+            type: string
+            default: setup.py
         executor: default
         steps:
           - checkout
           - update_venv
+            venv_checksum_filename: setup.no
           - run_tests
 
 version: 2.1
