@@ -7,16 +7,36 @@ orbs:
         docker:
           - image: circleci/python:3.7
     commands:
-      dospecialthings:
+      update_venv:
         steps:
-          - run: echo "We will now do special things"
+          - restore_cache:
+            key: dependency-cache-{{ checksum "setup.py" }}
+          - run:
+            name: install python dependencies
+            command: |
+              python3 -m venv venv
+              . venv/bin/activate
+              python setup.py install
+          - save_cache:
+            key: dependency-cache-{{ checksum "setup.py" }}
+            paths:
+              - "venv"
+      run_tests:
+        steps:
+        - run:
+            name: run tests
+            command: |
+              . venv/bin/activate
+              python setup.py test
+
     jobs:
-      myjob:
+      pytest:
         executor: default
         steps:
-          - dospecialthings
+          - update_venv
+          - run_tests
 
 workflows:
     "Hello Workflow":
         jobs:
-          - python/myjob
+          - python/pytest
