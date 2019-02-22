@@ -1,5 +1,3 @@
-version: 2.1
-
 orbs:
   python:
     executors:
@@ -9,26 +7,24 @@ orbs:
     commands:
       update_venv:
         steps:
-          - restore_cache:
-            key: dependency-cache-{{ checksum "setup.py" }}
-          - run:
-            name: install python dependencies
-            command: |
-              python3 -m venv venv
-              . venv/bin/activate
-              python setup.py install
-          - save_cache:
-            key: dependency-cache-{{ checksum "setup.py" }}
-            paths:
-              - "venv"
+           - restore_cache:
+               key: dependency-cache-{{ checksum "setup.py" }}
+           - run:
+               name: install python dependencies
+               command: |
+                 python3 -m venv venv
+                 . venv/bin/activate
+                 python setup.py install
+           - save_cache:
+               key: dependency-cache-{{ checksum "setup.py" }}
+               paths:
+                 - "venv"
       run_tests:
         steps:
-        - run:
-            name: run tests
-            command: |
-              . venv/bin/activate
-              python setup.py test
-
+          - run:
+              command: |
+                . venv/bin/activate
+                python setup.py test
     jobs:
       pytest:
         executor: default
@@ -36,7 +32,8 @@ orbs:
           - update_venv
           - run_tests
 
+version: 2.1
 workflows:
-    "Hello Workflow":
-        jobs:
-          - python/pytest
+  main:
+    jobs:
+      - python/pytest
