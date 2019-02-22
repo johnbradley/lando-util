@@ -1,10 +1,22 @@
 version: 2.1
 
-
 orbs:
-  python: chariot/python@0.0.1
+  python:
+    executors:
+      default:
+        docker:
+          - image: circleci/python:3.7
+    commands:
+      dospecialthings:
+        steps:
+          - run: echo "We will now do special things"
+    jobs:
+      myjob:
+        executor: default
+        steps:
+          - dospecialthings
 
 workflows:
     "Hello Workflow":
         jobs:
-          - python/pytest
+          - python/myjob
