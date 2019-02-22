@@ -24,23 +24,31 @@ orbs:
                paths:
                  - venv
       run_tests:
+        parameters:
+          test_command:
+            description: command to run for tests
+            type: string
         steps:
           - run:
               command: |
                 . venv/bin/activate
-                python setup.py test
+                <<parameters.test_command>>
     jobs:
       pytest:
         parameters:
           venv_checksum_filename:
             description: Name of the file we checksum to save venv cache
             type: string
+          test_command:
+            description: command to run for tests
+            type: string
         executor: default
         steps:
           - checkout
           - update_venv:
               venv_checksum_filename: <<parameters.venv_checksum_filename>>
-          - run_tests
+          - run_tests:
+              test_command: <<parameters.test_command>>
 
 version: 2.1
 workflows:
@@ -48,4 +56,5 @@ workflows:
     jobs:
       - python/pytest:
           venv_checksum_filename: setup.py
+          test_command: python setup.py test
 
