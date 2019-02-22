@@ -29,6 +29,7 @@ orbs:
       pytest:
         executor: default
         steps:
+          - checkout
           - update_venv
           - run_tests
 
