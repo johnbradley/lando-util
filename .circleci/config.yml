@@ -10,6 +10,9 @@ orbs:
           venv_checksum_filename:
             description: Name of the file we checksum to save venv cache
             type: string
+          install_command:
+            description: Command to run to install dependencies
+            type: string
         steps:
            - restore_cache:
                key: dependency-cache-{{ checksum "<<parameters.venv_checksum_filename>>" }}
@@ -18,7 +21,7 @@ orbs:
                command: |
                  python3 -m venv venv
                  . venv/bin/activate
-                 python setup.py install
+                 <<parameters.install_command>>
            - save_cache:
                key: dependency-cache-{{ checksum "<<parameters.venv_checksum_filename>>" }}
                paths:
@@ -39,6 +42,9 @@ orbs:
           venv_checksum_filename:
             description: Name of the file we checksum to save venv cache
             type: string
+          install_command:
+            description: Command to run to install dependencies
+            type: string
           test_command:
             description: command to run for tests
             type: string
@@ -47,6 +53,7 @@ orbs:
           - checkout
           - update_venv:
               venv_checksum_filename: <<parameters.venv_checksum_filename>>
+              install_command: <<parameters.install_command>>
           - run_tests:
               test_command: <<parameters.test_command>>
 
@@ -56,5 +63,6 @@ workflows:
     jobs:
       - python/pytest:
           venv_checksum_filename: setup.py
+          install_command: python setup.py install
           test_command: python setup.py test
 
