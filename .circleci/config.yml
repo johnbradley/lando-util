@@ -1,0 +1,68 @@
+orbs:
+  python:
+    executors:
+      default:
+        docker:
+          - image: circleci/python:3.6
+    commands:
+      update_venv:
+        parameters:
+          venv_checksum_filename:
+            description: Name of the file we checksum to save venv cache
+            type: string
+          install_command:
+            description: Command to run to install dependencies
+            type: string
+        steps:
+           - restore_cache:
+               key: dependency-cache-{{ checksum "<<parameters.venv_checksum_filename>>" }}
+           - run:
+               name: install python dependencies
+               command: |
+                 python3 -m venv venv
+                 . venv/bin/activate
+                 <<parameters.install_command>>
+           - save_cache:
+               key: dependency-cache-{{ checksum "<<parameters.venv_checksum_filename>>" }}
+               paths:
+                 - venv
+      run_tests:
+        parameters:
+          test_command:
+            description: command to run for tests
+            type: string
+        steps:
+          - run:
+              command: |
+                . venv/bin/activate
+                <<parameters.test_command>>
+    jobs:
+      pytest:
+        parameters:
+          venv_checksum_filename:
+            description: Name of the file we checksum to save venv cache
+            type: string
+          install_command:
+            description: Command to run to install dependencies
+            type: string
+          test_command:
+            description: command to run for tests
+            type: string
+        executor: default
+        steps:
+          - checkout
+          - update_venv:
+              venv_checksum_filename: <<parameters.venv_checksum_filename>>
+              install_command: <<parameters.install_command>>
+          - run_tests:
+              test_command: <<parameters.test_command>>
+
+version: 2.1
+workflows:
+  main:
+    jobs:
+      - python/pytest:
+          venv_checksum_filename: setup.py
+          install_command: python setup.py install
+          test_command: python setup.py test
+
