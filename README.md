@@ -7,6 +7,9 @@ Utilities used by [k8s.lando](https://github.com/Duke-GCB/lando/blob/master/land
 These utilities are meant to be run inside a k8s container by `k8s.lando`.
 This logic was broken out of [lando_worker](https://github.com/Duke-GCB/lando/tree/master/lando/worker) to be simplier to understand, maintain and replace. The methods to download, organize directories and upload are baked into the `lando_worker` VM, but in the future `lando worker` can be simplified to use these containerized utilties also.
 
+## Requirements
+- [python](https://www.python.org/) - version 3.3+
+
 ## Install
 ```
 python setup.py install
