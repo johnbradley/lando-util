@@ -18,18 +18,17 @@ class Settings(object):
         self.share_user_message = share.get('user_message', 'Bespin job results.')
 
 
-class NothingToUploadException(Exception):
-    pass
-
-
 class UploadUtil(object):
     def __init__(self, cmdfile):
         self.settings = Settings(cmdfile)
         self.dds_client = DukeDSClient()
         self.dds_config = self.dds_client.dds_connection.config
 
-    def create_project(self):
+    def get_or_create_project(self):
         project_name = self.settings.destination
+        for project in self.dds_client.get_projects():
+            if project.name == project_name:
+                return project
         return self.dds_client.create_project(project_name, description=project_name)
 
     def upload_files(self, project):
@@ -40,8 +39,6 @@ class UploadUtil(object):
         if project_upload.needs_to_upload():
             click.echo("Uploading")
             project_upload.run()
-        else:
-            raise NothingToUploadException("Error: No files or folders found to upload.")
 
     def share_project(self, project):
         remote_store = RemoteStore(self.dds_config)
@@ -69,14 +66,10 @@ class UploadUtil(object):
 @click.argument('outfile', type=click.File('w'))
 def main(cmdfile, outfile):
     util = UploadUtil(cmdfile)
-    project = util.create_project()
-    try:
-        util.upload_files(project)
-        util.share_project(project)
-        util.create_annotate_project_details_script(project, outfile)
-    except NothingToUploadException:
-        project.delete()
-        raise
+    project = util.get_or_create_project()
+    util.upload_files(project)
+    util.share_project(project)
+    util.create_annotate_project_details_script(project, outfile)
 
 
 if __name__ == '__main__':
