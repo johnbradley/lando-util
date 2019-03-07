@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='lando-util',
       version='0.2.0',
-      description='Test',
+      description='Utility functions for https://github.com/Duke-GCB/lando',
       url='http://github.com/Duke-GCB/lando-util',
       license='MIT',
       packages=['lando_util'],
