@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock, call
-from lando_util.upload import Settings, NothingToUploadException, UploadUtil, main
+from lando_util.upload import Settings, UploadUtil, main
 
 
 class TestSettings(TestCase):
@@ -43,12 +43,25 @@ class TestSettings(TestCase):
 @patch('lando_util.upload.Settings')
 @patch('lando_util.upload.DukeDSClient')
 class TestUploadUtil(TestCase):
-    def test_create_project(self, mock_duke_ds_client, mock_settings):
+    def test_get_or_create_project_creates_project(self, mock_duke_ds_client, mock_settings):
         mock_settings.return_value.destination = 'myproject'
+        mock_duke_ds_client.return_value.get_projects.return_value = []
         util = UploadUtil(Mock())
-        project = util.create_project()
+        project = util.get_or_create_project()
         self.assertEqual(project, util.dds_client.create_project.return_value)
         util.dds_client.create_project.assert_called_with('myproject', description='myproject')
+
+    def test_get_or_create_project_finds_project(self, mock_duke_ds_client, mock_settings):
+        mock_settings.return_value.destination = 'myproject'
+        mock_project = Mock()
+        mock_project.name = 'myproject'
+        mock_duke_ds_client.return_value.get_projects.return_value = [
+            mock_project
+        ]
+        util = UploadUtil(Mock())
+        project = util.get_or_create_project()
+        self.assertEqual(project, mock_project)
+        util.dds_client.create_project.assert_not_called()
 
     @patch('lando_util.upload.ProjectUpload')
     @patch('lando_util.upload.ProjectNameOrId')
@@ -79,8 +92,7 @@ class TestUploadUtil(TestCase):
         mock_project = Mock()
         mock_project_upload.return_value.get_differences_summary.return_value = 'There are 0 files to upload.'
         mock_project_upload.return_value.needs_to_upload.return_value = False
-        with self.assertRaises(NothingToUploadException):
-            util.upload_files(project=mock_project)
+        util.upload_files(project=mock_project)
         mock_click.echo.assert_called_with('There are 0 files to upload.')
 
     @patch('lando_util.upload.RemoteStore')
@@ -131,18 +143,8 @@ class TestMain(TestCase):
         main.callback(mock_cmdfile, mock_outfile)
 
         mock_upload_util.assert_called_with(mock_cmdfile)
-        mock_upload_util.return_value.create_project.assert_called_with()
-        mock_project = mock_upload_util.return_value.create_project.return_value
+        mock_upload_util.return_value.get_or_create_project.assert_called_with()
+        mock_project = mock_upload_util.return_value.get_or_create_project.return_value
         mock_upload_util.return_value.share_project.assert_called_with(mock_project)
         mock_upload_util.return_value.create_annotate_project_details_script.assert_called_with(
             mock_project, mock_outfile)
-
-    @patch('lando_util.upload.UploadUtil')
-    def test_main_nothing_to_upload(self, mock_upload_util):
-        mock_cmdfile = Mock()
-        mock_outfile = Mock()
-        mock_upload_util.return_value.upload_files.side_effect = NothingToUploadException("Nothing to upload")
-
-        with self.assertRaises(NothingToUploadException):
-            main.callback(mock_cmdfile, mock_outfile)
-        mock_upload_util.return_value.create_project.return_value.delete.assert_called_with()
