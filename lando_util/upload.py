@@ -30,7 +30,10 @@ class ActivitySettings(object):
 
 
 class DukeDSProjectInfo(object):
-    # copied from https://github.com/Duke-GCB/lando/blob/76f981ebff4ae0abbabbc4461308e9e5ea0bc830/lando/worker/provenance.py#L58
+    """
+    Copied from https://github.com/Duke-GCB/lando/blob/76f981ebff4ae0abbabbc4461308e9e5ea0bc830/lando/worker/
+    provenance.py#L58
+    """
     def __init__(self, project):
         """
         Contains file_id_lookup that goes from an absolute path -> file_id for files in project
@@ -66,6 +69,46 @@ class DukeDSProjectInfo(object):
             return children_files
 
 
+class DukeDSActivity(object):
+    def __init__(self, dds_client, settings, project_info):
+        self.dds_client = dds_client
+        self.data_service = dds_client.dds_connection.data_service
+        self.activity_settings = settings.activity_settings
+        self.file_id_lookup = project_info.file_id_lookup
+
+    def create(self):
+        click.echo("Creating activity {}.".format(self.activity_settings.name))
+        activity_id = self._create_activity()
+
+        click.echo("Attaching {} used relations.".format(len(self.activity_settings.input_file_version_ids)))
+        for input_file_version_id in self.activity_settings.input_file_version_ids:
+            self._create_activity_used_relation(activity_id, input_file_version_id)
+
+        click.echo("Attaching {} generated relations.".format(len(self.activity_settings.output_file_paths)))
+        for output_file_path in self.activity_settings.output_file_paths:
+            output_file_version_id = self._get_file_version_id_for_path(output_file_path)
+            self._create_activity_generated_relation(activity_id, output_file_version_id)
+
+    def _create_activity(self):
+        resp = self.data_service.create_activity(
+            self.activity_settings.name,
+            self.activity_settings.description,
+            self.activity_settings.started_on,
+            self.activity_settings.ended_on)
+        return resp.json()["id"]
+
+    def _create_activity_used_relation(self, activity_id, file_version_id):
+        self.data_service.create_used_relation(activity_id, KindType.file_str, file_version_id)
+
+    def _create_activity_generated_relation(self, activity_id, file_version_id):
+        self.data_service.create_was_generated_by_relation(activity_id, KindType.file_str, file_version_id)
+
+    def _get_file_version_id_for_path(self, output_file_path):
+        file_id = self.file_id_lookup[output_file_path]
+        duke_ds_file = self.dds_client.get_file_by_id(file_id)
+        return duke_ds_file.current_version['id']
+
+
 class UploadUtil(object):
     def __init__(self, cmdfile):
         self.settings = Settings(cmdfile)
@@ -93,6 +136,10 @@ class UploadUtil(object):
             project_upload.run()
         return DukeDSProjectInfo(project_upload.local_project)
 
+    def create_provenance_activity(self, project_info):
+        activity = DukeDSActivity(self.dds_client, self.settings, project_info)
+        activity.create()
+
     def share_project(self, project):
         remote_store = RemoteStore(self.dds_config)
         remote_project = remote_store.fetch_remote_project_by_id(project.id)
@@ -103,39 +150,6 @@ class UploadUtil(object):
                                force_send=True,
                                auth_role=self.settings.share_auth_role,
                                user_message=self.settings.share_user_message)
-
-    def create_provenance_activity(self, project_info):
-        activity_settings = self.settings.activity_settings
-        click.echo("Creating activity {}".format(activity_settings.name))
-        activity_id = self._create_activity(activity_settings)
-
-        click.echo("Attaching {} used relations.".format(len(activity_settings.input_file_version_ids)))
-        for input_file_version_id in activity_settings.input_file_version_ids:
-            self._create_activity_used_relation(activity_id, input_file_version_id)
-
-        click.echo("Attaching {} generated relations.".format(len(activity_settings.output_file_paths)))
-        for output_file_path in activity_settings.output_file_paths:
-            output_file_version_id = self._get_file_version_id_for_path(project_info, output_file_path)
-            self._create_activity_generated_relation(activity_id, output_file_version_id)
-
-    def _create_activity(self, activity_settings):
-        resp = self.data_service.create_activity(
-            activity_settings.name,
-            activity_settings.description,
-            activity_settings.started_on,
-            activity_settings.ended_on)
-        return resp.json()["id"]
-
-    def _create_activity_used_relation(self, activity_id, file_version_id):
-        self.data_service.create_used_relation(activity_id, KindType.file_str, file_version_id)
-
-    def _create_activity_generated_relation(self, activity_id, file_version_id):
-        self.data_service.create_was_generated_by_relation(activity_id, KindType.file_str, file_version_id)
-
-    def _get_file_version_id_for_path(self, project_info, output_file_path):
-        file_id = project_info.file_id_lookup[output_file_path]
-        duke_ds_file = self.dds_client.get_file_by_id(file_id)
-        return duke_ds_file.current_version['id']
 
     def create_annotate_project_details_script(self, project, outfile):
         readme_file = project.get_child_for_path(self.settings.readme_file_path)

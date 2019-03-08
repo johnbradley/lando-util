@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock, call
-from lando_util.upload import Settings, UploadUtil, main
+from lando_util.upload import Settings, UploadUtil, main, DukeDSProjectInfo, DukeDSActivity
 
 
 class TestSettings(TestCase):
@@ -178,3 +178,74 @@ class TestMain(TestCase):
         mock_upload_util.return_value.share_project.assert_called_with(mock_project)
         mock_upload_util.return_value.create_annotate_project_details_script.assert_called_with(
             mock_project, mock_outfile)
+
+
+class TestDukeDSProjectInfo(TestCase):
+    """
+    Copied from https://github.com/Duke-GCB/lando/blob/76f981ebff4ae0abbabbc4461308e9e5ea0bc830/lando/worker/tests/
+    test_provenance.py#L45
+    """
+    def test_file_id_lookup(self):
+        mock_file1 = Mock(kind='dds-file', remote_id='123', path='/tmp/data.txt')
+        mock_file2 = Mock(kind='dds-file', remote_id='124', path='/tmp/data2.txt')
+        mock_folder = Mock(kind='dds-folder', children=[mock_file2])
+        mock_project = Mock(kind='dds-project', children=[mock_file1, mock_folder])
+        project_info = DukeDSProjectInfo(project=mock_project)
+        expected_dictionary = {'/tmp/data.txt': '123', '/tmp/data2.txt': '124'}
+        self.assertEqual(expected_dictionary, project_info.file_id_lookup)
+
+
+class TestDukeDSActivity(TestCase):
+    def setUp(self):
+        self.mock_dds_client = Mock()
+        self.mock_dds_client.get_file_by_id.return_value = Mock(current_version={"id": "999"})
+        self.mock_data_service = self.mock_dds_client.dds_connection.data_service
+        mock_activity_response = Mock()
+        mock_activity_response.json.return_value = {"id": "111"}
+        mock_data_service = self.mock_dds_client.dds_connection.data_service
+        mock_data_service.create_activity.return_value = mock_activity_response
+        mock_activity_settings = Mock(
+            description="mydescription",
+            started_on="2019-01-01 12:30",
+            ended_on="2019-01-01 12:35",
+            input_file_version_ids=["222", "333", "444"],
+            output_file_paths=["/data/one.txt", "/data/two.txt"],
+        )
+        mock_activity_settings.name = "myactivity"
+        self.mock_settings = Mock(activity_settings=mock_activity_settings)
+        self.mock_project_info = Mock(file_id_lookup={
+            "/data/one.txt": "678",
+            "/data/two.txt": "890",
+        })
+
+    @patch('lando_util.upload.click')
+    def test_create_echos_progress(self, mock_click):
+        activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
+        activity.create()
+
+        mock_click.echo.assert_has_calls([
+            call('Creating activity myactivity.'),
+            call('Attaching 3 used relations.'),
+            call('Attaching 2 generated relations.'),
+        ])
+
+    @patch('lando_util.upload.click')
+    def test_create_updates_dukeds(self, mock_click):
+        activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
+        activity.create()
+
+        self.mock_data_service.create_activity.assert_called_with(
+            'myactivity', 'mydescription', '2019-01-01 12:30', '2019-01-01 12:35')
+        self.mock_data_service.create_used_relation.assert_has_calls([
+            call('111', 'dds-file', '222'),
+            call('111', 'dds-file', '333'),
+            call('111', 'dds-file', '444')
+        ])
+
+        self.mock_data_service.create_was_generated_by_relation.assert_has_calls([
+            call('111', 'dds-file', '999'), call('111', 'dds-file', '999')
+        ])
+
+        self.mock_dds_client.get_file_by_id.assert_has_calls([
+            call('678'), call('890')
+        ])
