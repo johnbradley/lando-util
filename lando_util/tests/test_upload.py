@@ -125,6 +125,14 @@ class TestUploadUtil(TestCase):
         util.upload_files(project=mock_project)
         mock_click.echo.assert_called_with('There are 0 files to upload.')
 
+    @patch('lando_util.upload.DukeDSActivity')
+    def test_create_provenance_activity(self, mock_duke_ds_activity, mock_duke_ds_client, mock_settings):
+        mock_project_info = Mock()
+        util = UploadUtil(Mock())
+        util.create_provenance_activity(mock_project_info)
+        mock_duke_ds_activity.assert_called_with(util.dds_client, util.settings, mock_project_info)
+        mock_duke_ds_activity.return_value.create.assert_called_with()
+
     @patch('lando_util.upload.RemoteStore')
     @patch('lando_util.upload.D4S2Project')
     def test_share_project(self, mock_d4s2_project, mock_remote_store, mock_duke_ds_client, mock_settings):
@@ -173,10 +181,14 @@ class TestMain(TestCase):
         main.callback(mock_cmdfile, mock_outfile)
 
         mock_upload_util.assert_called_with(mock_cmdfile)
-        mock_upload_util.return_value.get_or_create_project.assert_called_with()
-        mock_project = mock_upload_util.return_value.get_or_create_project.return_value
-        mock_upload_util.return_value.share_project.assert_called_with(mock_project)
-        mock_upload_util.return_value.create_annotate_project_details_script.assert_called_with(
+        upload_util = mock_upload_util.return_value
+        upload_util.get_or_create_project.assert_called_with()
+        mock_project = upload_util.get_or_create_project.return_value
+        upload_util.create_provenance_activity.assert_called_with(
+            upload_util.upload_files.return_value
+        )
+        upload_util.share_project.assert_called_with(mock_project)
+        upload_util.create_annotate_project_details_script.assert_called_with(
             mock_project, mock_outfile)
 
 
