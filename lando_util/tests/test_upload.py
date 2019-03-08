@@ -12,6 +12,18 @@ class TestSettings(TestCase):
             "paths": ["/data/results"],
             "share": {
                 "dds_user_ids": ["123","456"]
+            },
+            "activity": {
+                "name": "myactivity",
+                "description": "mydesc",
+                "started_on": "2019-03-01 12:30",
+                "ended_on": "2019-03-01 12:35",
+                "input_file_version_ids": [
+                    "abd123",
+                ],
+                "output_file_paths": [
+                    "/data/results/output.txt"
+                ]
             }
         }
         mock_cmdfile = Mock()
@@ -21,6 +33,12 @@ class TestSettings(TestCase):
         self.assertEqual(settings.share_dds_user_ids, ["123","456"])
         self.assertEqual(settings.share_auth_role, "project_admin")
         self.assertEqual(settings.share_user_message, "Bespin job results.")
+        self.assertEqual(settings.activity_settings.name, "myactivity")
+        self.assertEqual(settings.activity_settings.description, "mydesc")
+        self.assertEqual(settings.activity_settings.started_on, "2019-03-01 12:30")
+        self.assertEqual(settings.activity_settings.ended_on, "2019-03-01 12:35")
+        self.assertEqual(settings.activity_settings.input_file_version_ids, ["abd123"])
+        self.assertEqual(settings.activity_settings.output_file_paths, ["/data/results/output.txt"])
 
     @patch('lando_util.upload.json')
     def test_constructor_optional_values(self, mock_json):
@@ -33,6 +51,18 @@ class TestSettings(TestCase):
                 "auth_role": "project_downloader",
                 "user_message": "Other stuff"
             },
+            "activity": {
+                "name": "myactivity",
+                "description": "mydesc",
+                "started_on": "2019-03-01 12:30",
+                "ended_on": "2019-03-01 12:35",
+                "input_file_version_ids": [
+                    "abd123",
+                ],
+                "output_file_paths": [
+                    '/data/results/output.txt'
+                ]
+            }
         }
         mock_cmdfile = Mock()
         settings = Settings(mock_cmdfile)
