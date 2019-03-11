@@ -1,6 +1,86 @@
 from unittest import TestCase
-from unittest.mock import patch, Mock, call
+from unittest.mock import patch, Mock, call, mock_open
 from lando_util.upload import Settings, UploadUtil, main, UploadedFilesInfo, DukeDSActivity
+import json
+
+
+SAMPLE_JOB_OUTPUT = {
+    "align_log": [
+        {
+            "class": "File",
+            "checksum": "sha1$0e724dda4c96d901af1ecd53d0cd5882d6b1a814",
+            "location": "/tmp/align_log.txt",
+            "size": 900,
+            "secondaryFiles": [
+                {
+                    "class": "File",
+                    "checksum": "sha1$6ec2f899946f8091693ce65cc6323958695dec21",
+                    "location": "/tmp/align_log.idx",
+                    "size": 123
+                }
+            ]
+        }
+    ],
+    "aligned_read": {
+        "class": "File",
+        "checksum": "sha1$0e724dda4c96d901af1ecd53d0cd5882d6b1a814",
+        "location": "/tmp/aligned_read.txt",
+        "size": 1010123,
+        "secondaryFiles": [
+            {
+                "class": "File",
+                "checksum": "sha1$6ec2f899946f8091693ce65cc6323958695dec20",
+                "location": "/tmp/aligned_read.idx",
+                "size": 6613916
+            }
+        ]
+    },
+    "trim_reports": [
+        [
+            {
+                "class": "File",
+                "checksum": "sha1$0e724dda4c96d901af1ecd53d0cd5882d6b1a815",
+                "location": "/tmp/trim_report.txt",
+                "size": 44,
+            }
+        ]
+    ],
+    "bams_markduplicates_dir": {
+        "class": "Directory",
+        "basename": "bams-markduplicates",
+        "location": "file:///work/data_for_job_49/working/results/bams-markduplicates",
+        "listing": [
+            {
+                "checksum": "sha1$878d31004d7867b9ded64426657519a28b7ce46b",
+                "location": "file:///work/data_for_job_49/working/results/bams-markduplicates/SA03505-dedup.bam",
+                "secondaryFiles": [
+                    {
+                        "checksum": "sha1$2144e6c9778fa3564e4b1a4069cee3a7f3ef9d1b",
+                        "location": "file:///work/data_for_job_49/working/results/bams-markduplicates/SA03505-dedup.bai",
+                        "class": "File",
+                        "size": 6218232
+                    }
+                ],
+                "class": "File",
+                "size": 5570967966
+            },
+            {
+                "checksum": "sha1$59697e90052dc258b6887e8c84eb42c2f5ae0842",
+                "location": "file:///work/data_for_job_49/working/results/bams-markduplicates/SA03567-dedup.bam",
+                "secondaryFiles": [
+                    {
+                        "checksum": "sha1$9486797d5dd4c2c757b853bc21d64f790988b207",
+                        "location": "file:///work/data_for_job_49/working/results/bams-markduplicates/SA03567-dedup.bai",
+                        "class": "File",
+                        "size": 6309968
+                    }
+                ],
+                "class": "File",
+                "size": 7253903222
+            },
+        ]
+    }
+}
 
 
 class TestSettings(TestCase):
@@ -23,7 +103,8 @@ class TestSettings(TestCase):
                 ],
                 "output_file_paths": [
                     "/data/results/output.txt"
-                ]
+                ],
+                "workflow_output_json_path": "bespin-workflow-output.json"
             }
         }
         mock_cmdfile = Mock()
@@ -38,7 +119,7 @@ class TestSettings(TestCase):
         self.assertEqual(settings.activity_settings.started_on, "2019-03-01 12:30")
         self.assertEqual(settings.activity_settings.ended_on, "2019-03-01 12:35")
         self.assertEqual(settings.activity_settings.input_file_version_ids, ["abd123"])
-        self.assertEqual(settings.activity_settings.output_file_paths, ["/data/results/output.txt"])
+        self.assertEqual(settings.activity_settings.workflow_output_json_path, "bespin-workflow-output.json")
 
     @patch('lando_util.upload.json')
     def test_constructor_optional_values(self, mock_json):
@@ -59,9 +140,7 @@ class TestSettings(TestCase):
                 "input_file_version_ids": [
                     "abd123",
                 ],
-                "output_file_paths": [
-                    '/data/results/output.txt'
-                ]
+                "workflow_output_json_path": "bespin-workflow-output.json"
             }
         }
         mock_cmdfile = Mock()
@@ -225,8 +304,18 @@ class TestDukeDSActivity(TestCase):
             started_on="2019-01-01 12:30",
             ended_on="2019-01-01 12:35",
             input_file_version_ids=["222", "333", "444"],
-            output_file_paths=["/data/one.txt", "/data/two.txt"],
+            workflow_output_json_path="/data/workflow_output.json",
         )
+        self.mock_workflow_output_str = json.dumps({
+            "one": {
+                "class": "File",
+                "location": "/data/one.txt",
+            },
+            "two": {
+                "class": "File",
+                "location": "/data/two.txt",
+            },
+        })
         mock_activity_settings.name = "myactivity"
         self.mock_settings = Mock(activity_settings=mock_activity_settings)
         self.mock_project_info = Mock(file_id_lookup={
@@ -234,21 +323,26 @@ class TestDukeDSActivity(TestCase):
             "/data/two.txt": "890",
         })
 
+
+
     @patch('lando_util.upload.click')
     def test_create_echos_progress(self, mock_click):
-        activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
-        activity.create()
+        with patch("builtins.open", mock_open(read_data=self.mock_workflow_output_str)) as mock_file:
+            activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
+            activity.create()
 
         mock_click.echo.assert_has_calls([
             call('Creating activity myactivity.'),
             call('Attaching 3 used relations.'),
             call('Attaching 2 generated relations.'),
         ])
+        mock_file.assert_called_with('/data/workflow_output.json', 'r')
 
     @patch('lando_util.upload.click')
     def test_create_updates_dukeds(self, mock_click):
-        activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
-        activity.create()
+        with patch("builtins.open", mock_open(read_data=self.mock_workflow_output_str)) as mock_file:
+            activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
+            activity.create()
 
         self.mock_data_service.create_activity.assert_called_with(
             'myactivity', 'mydescription', '2019-01-01 12:30', '2019-01-01 12:35')

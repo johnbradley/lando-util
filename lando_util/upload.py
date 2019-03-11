@@ -4,6 +4,7 @@ from ddsc.sdk.client import Client as DukeDSClient, KindType
 from ddsc.core.upload import ProjectUpload
 from ddsc.core.remotestore import RemoteStore, ProjectNameOrId
 from ddsc.core.d4s2 import D4S2Project
+from urllib.parse import urlparse
 
 
 class Settings(object):
@@ -26,7 +27,7 @@ class ActivitySettings(object):
         self.started_on = data['started_on']
         self.ended_on = data['ended_on']
         self.input_file_version_ids = data['input_file_version_ids']
-        self.output_file_paths = data['output_file_paths']
+        self.workflow_output_json_path = data['workflow_output_json_path']
 
 
 class UploadedFilesInfo(object):
@@ -84,8 +85,9 @@ class DukeDSActivity(object):
         for input_file_version_id in self.activity_settings.input_file_version_ids:
             self._create_activity_used_relation(activity_id, input_file_version_id)
 
-        click.echo("Attaching {} generated relations.".format(len(self.activity_settings.output_file_paths)))
-        for output_file_path in self.activity_settings.output_file_paths:
+        output_file_paths = self._get_output_file_paths()
+        click.echo("Attaching {} generated relations.".format(len(output_file_paths)))
+        for output_file_path in output_file_paths:
             output_file_version_id = self._get_file_version_id_for_path(output_file_path)
             self._create_activity_generated_relation(activity_id, output_file_version_id)
 
@@ -107,6 +109,29 @@ class DukeDSActivity(object):
         file_id = self.file_id_lookup[output_file_path]
         duke_ds_file = self.dds_client.get_file_by_id(file_id)
         return duke_ds_file.current_version['id']
+
+    def _get_output_file_paths(self):
+        file_paths = []
+        with open(self.activity_settings.workflow_output_json_path, 'r') as infile:
+            data = json.load(infile)
+            for value in data.values():
+                DukeDSActivity._recursive_add_file_paths(value, file_paths)
+            return file_paths
+
+    @staticmethod
+    def _recursive_add_file_paths(dict_or_array, file_paths):
+        if isinstance(dict_or_array, dict):
+            if dict_or_array.get('class') == "File":
+                if 'location' in dict_or_array:
+                    file_location = dict_or_array['location']
+                    file_path = urlparse(file_location).path
+                    file_paths.append(file_path)
+                if 'secondaryFiles' in dict_or_array:
+                    secondary_files = dict_or_array['secondaryFiles']
+                    DukeDSActivity._recursive_add_file_paths(secondary_files, file_paths)
+        else:
+            for elem in dict_or_array:
+                DukeDSActivity._recursive_add_file_paths(elem, file_paths)
 
 
 class UploadUtil(object):
@@ -130,7 +155,7 @@ class UploadUtil(object):
         """
         Upload files from local paths to the specified project
         :param project: ddsc.sdk.client.Project: project to upload files to
-        :return: UploadedFilesInfo: contains details about uploaded files
+        :return: UploadedFileInfo: contains details about uploaded files
         """
         project_upload = ProjectUpload(self.dds_config,
                                        ProjectNameOrId.create_from_project_id(project.id),
