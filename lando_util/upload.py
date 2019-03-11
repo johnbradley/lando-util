@@ -115,11 +115,11 @@ class DukeDSActivity(object):
         with open(self.activity_settings.workflow_output_json_path, 'r') as infile:
             data = json.load(infile)
             for value in data.values():
-                DukeDSActivity._recursive_add_file_paths(value, file_paths)
+                DukeDSActivity._recursive_add_cwl_file_paths(value, file_paths)
             return file_paths
 
     @staticmethod
-    def _recursive_add_file_paths(dict_or_array, file_paths):
+    def _recursive_add_cwl_file_paths(dict_or_array, file_paths):
         if isinstance(dict_or_array, dict):
             if dict_or_array.get('class') == "File":
                 if 'location' in dict_or_array:
@@ -128,10 +128,10 @@ class DukeDSActivity(object):
                     file_paths.append(file_path)
                 if 'secondaryFiles' in dict_or_array:
                     secondary_files = dict_or_array['secondaryFiles']
-                    DukeDSActivity._recursive_add_file_paths(secondary_files, file_paths)
+                    DukeDSActivity._recursive_add_cwl_file_paths(secondary_files, file_paths)
         else:
             for elem in dict_or_array:
-                DukeDSActivity._recursive_add_file_paths(elem, file_paths)
+                DukeDSActivity._recursive_add_cwl_file_paths(elem, file_paths)
 
 
 class UploadUtil(object):
