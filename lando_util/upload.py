@@ -29,7 +29,7 @@ class ActivitySettings(object):
         self.output_file_paths = data['output_file_paths']
 
 
-class DukeDSProjectInfo(object):
+class UploadedFilesInfo(object):
     """
     Copied from https://github.com/Duke-GCB/lando/blob/76f981ebff4ae0abbabbc4461308e9e5ea0bc830/lando/worker/
     provenance.py#L58
@@ -49,7 +49,7 @@ class DukeDSProjectInfo(object):
         :return: dict: local_file_path -> duke_ds_file_id
         """
         lookup = {}
-        for local_file in DukeDSProjectInfo._gather_files(project):
+        for local_file in UploadedFilesInfo._gather_files(project):
             lookup[local_file.path] = local_file.remote_id
         return lookup
 
@@ -65,16 +65,16 @@ class DukeDSProjectInfo(object):
         else:
             children_files = []
             for child in project_node.children:
-                children_files.extend(DukeDSProjectInfo._gather_files(child))
+                children_files.extend(UploadedFilesInfo._gather_files(child))
             return children_files
 
 
 class DukeDSActivity(object):
-    def __init__(self, dds_client, settings, project_info):
+    def __init__(self, dds_client, settings, uploaded_files_info):
         self.dds_client = dds_client
         self.data_service = dds_client.dds_connection.data_service
         self.activity_settings = settings.activity_settings
-        self.file_id_lookup = project_info.file_id_lookup
+        self.file_id_lookup = uploaded_files_info.file_id_lookup
 
     def create(self):
         click.echo("Creating activity {}.".format(self.activity_settings.name))
@@ -115,11 +115,11 @@ class UploadUtil(object):
         self.dds_client = DukeDSClient()
         self.dds_config = self.dds_client.dds_connection.config
 
-    @property
-    def data_service(self):
-        return self.dds_client.dds_connection.data_service
-
     def get_or_create_project(self):
+        """
+        Find or create a project with the name self.settings.destination
+        :return: ddsc.sdk.client.Project
+        """
         project_name = self.settings.destination
         for project in self.dds_client.get_projects():
             if project.name == project_name:
@@ -127,6 +127,11 @@ class UploadUtil(object):
         return self.dds_client.create_project(project_name, description=project_name)
 
     def upload_files(self, project):
+        """
+        Upload files from local paths to the specified project
+        :param project: ddsc.sdk.client.Project: project to upload files to
+        :return: UploadedFileInfo: contains details about uploaded files
+        """
         project_upload = ProjectUpload(self.dds_config,
                                        ProjectNameOrId.create_from_project_id(project.id),
                                        self.settings.paths)
@@ -134,13 +139,21 @@ class UploadUtil(object):
         if project_upload.needs_to_upload():
             click.echo("Uploading")
             project_upload.run()
-        return DukeDSProjectInfo(project_upload.local_project)
+        return UploadedFilesInfo(project_upload.local_project)
 
-    def create_provenance_activity(self, project_info):
-        activity = DukeDSActivity(self.dds_client, self.settings, project_info)
+    def create_provenance_activity(self, uploaded_files_info):
+        """
+        Create a provenance activity in DukeDS API for our project.
+        :param uploaded_files_info: UploadedFilesInfo: contains details about uploaded files
+        """
+        activity = DukeDSActivity(self.dds_client, self.settings, uploaded_files_info)
         activity.create()
 
     def share_project(self, project):
+        """
+        Share the specified project with some users.
+        :param project: ddsc.sdk.client.Project: project to share
+        """
         remote_store = RemoteStore(self.dds_config)
         remote_project = remote_store.fetch_remote_project_by_id(project.id)
         d4s2_project = D4S2Project(self.dds_config, remote_store, print_func=print)
@@ -152,6 +165,11 @@ class UploadUtil(object):
                                user_message=self.settings.share_user_message)
 
     def create_annotate_project_details_script(self, project, outfile):
+        """
+        Create a script to annotat a pod with details about the uploaded project
+        :param project: ddsc.sdk.client.Project: project to share
+        :param outfile: output file to write script into
+        """
         readme_file = project.get_child_for_path(self.settings.readme_file_path)
         click.echo("Writing annotate project details script project_id:{} readme_file_id:{} to {}".format(
             project.id, readme_file.id, outfile.name))
@@ -167,8 +185,8 @@ class UploadUtil(object):
 def main(cmdfile, outfile):
     util = UploadUtil(cmdfile)
     project = util.get_or_create_project()
-    project_info = util.upload_files(project)
-    util.create_provenance_activity(project_info)
+    uploaded_files_info = util.upload_files(project)
+    util.create_provenance_activity(uploaded_files_info)
     util.share_project(project)
     util.create_annotate_project_details_script(project, outfile)
 

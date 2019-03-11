@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock, call
-from lando_util.upload import Settings, UploadUtil, main, DukeDSProjectInfo, DukeDSActivity
+from lando_util.upload import Settings, UploadUtil, main, UploadedFilesInfo, DukeDSActivity
 
 
 class TestSettings(TestCase):
@@ -103,7 +103,7 @@ class TestUploadUtil(TestCase):
         mock_project.id = '123456'
         mock_project_upload.return_value.needs_to_upload.return_value = True
         mock_project_upload.return_value.get_differences_summary.return_value = 'There are 2 files to upload.'
-        util.upload_files(project=mock_project)
+        local_project = util.upload_files(project=mock_project)
         mock_project_upload.assert_called_with(
             mock_duke_ds_client.return_value.dds_connection.config,
             mock_project_name_or_id.create_from_project_id.return_value,
@@ -202,7 +202,7 @@ class TestDukeDSProjectInfo(TestCase):
         mock_file2 = Mock(kind='dds-file', remote_id='124', path='/tmp/data2.txt')
         mock_folder = Mock(kind='dds-folder', children=[mock_file2])
         mock_project = Mock(kind='dds-project', children=[mock_file1, mock_folder])
-        project_info = DukeDSProjectInfo(project=mock_project)
+        project_info = UploadedFilesInfo(project=mock_project)
         expected_dictionary = {'/tmp/data.txt': '123', '/tmp/data2.txt': '124'}
         self.assertEqual(expected_dictionary, project_info.file_id_lookup)
 
