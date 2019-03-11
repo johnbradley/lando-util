@@ -45,7 +45,7 @@ JSON command file:
     "paths": ["<Path to folder or file to upload>"],
     "share": {
         "dds_user_ids": ["<DukeDS user id to share with>"],
-        "auth_role": "project_downloader",  // optional field
+        "auth_role": "<DukeDS auth role to grant to dds_user_ids users>",  // optional field
         "user_message": "<Message to include in the share email>"  // optional field
     },
     "activity": {
