@@ -26,7 +26,7 @@ class ActivitySettings(object):
         self.description = data['description']
         self.started_on = data['started_on']
         self.ended_on = data['ended_on']
-        self.input_file_version_ids = data['input_file_version_ids']
+        self.input_file_versions_json_path = data['input_file_versions_json_path']
         self.workflow_output_json_path = data['workflow_output_json_path']
 
 
@@ -81,8 +81,9 @@ class DukeDSActivity(object):
         click.echo("Creating activity {}.".format(self.activity_settings.name))
         activity_id = self._create_activity()
 
-        click.echo("Attaching {} used relations.".format(len(self.activity_settings.input_file_version_ids)))
-        for input_file_version_id in self.activity_settings.input_file_version_ids:
+        input_file_version_ids = self._get_input_file_version_ids()
+        click.echo("Attaching {} used relations.".format(len(input_file_version_ids)))
+        for input_file_version_id in input_file_version_ids:
             self._create_activity_used_relation(activity_id, input_file_version_id)
 
         output_file_paths = self._get_output_file_paths()
@@ -117,6 +118,11 @@ class DukeDSActivity(object):
             for value in data.values():
                 DukeDSActivity._recursive_add_cwl_file_paths(value, file_paths)
             return file_paths
+
+    def _get_input_file_version_ids(self):
+        with open(self.activity_settings.input_file_versions_json_path) as infile:
+            data = json.load(infile)
+            return [file_version["id"] for file_version in data["items"]]
 
     @staticmethod
     def _recursive_add_cwl_file_paths(dict_or_array, file_paths):

@@ -19,9 +19,7 @@ class TestSettings(TestCase):
                 "description": "mydesc",
                 "started_on": "2019-03-01 12:30",
                 "ended_on": "2019-03-01 12:35",
-                "input_file_version_ids": [
-                    "abd123",
-                ],
+                "input_file_versions_json_path": "dukeds-staged-file-versions.json",
                 "workflow_output_json_path": "bespin-workflow-output.json"
             }
         }
@@ -36,7 +34,7 @@ class TestSettings(TestCase):
         self.assertEqual(settings.activity_settings.description, "mydesc")
         self.assertEqual(settings.activity_settings.started_on, "2019-03-01 12:30")
         self.assertEqual(settings.activity_settings.ended_on, "2019-03-01 12:35")
-        self.assertEqual(settings.activity_settings.input_file_version_ids, ["abd123"])
+        self.assertEqual(settings.activity_settings.input_file_versions_json_path, "dukeds-staged-file-versions.json")
         self.assertEqual(settings.activity_settings.workflow_output_json_path, "bespin-workflow-output.json")
 
     @patch('lando_util.upload.json')
@@ -55,9 +53,7 @@ class TestSettings(TestCase):
                 "description": "mydesc",
                 "started_on": "2019-03-01 12:30",
                 "ended_on": "2019-03-01 12:35",
-                "input_file_version_ids": [
-                    "abd123",
-                ],
+                "input_file_versions_json_path": "dukeds-staged-file-versions.json",
                 "workflow_output_json_path": "bespin-workflow-output.json"
             }
         }
@@ -221,9 +217,16 @@ class TestDukeDSActivity(TestCase):
             description="mydescription",
             started_on="2019-01-01 12:30",
             ended_on="2019-01-01 12:35",
-            input_file_version_ids=["222", "333", "444"],
+            input_file_versions_json_path="/data/downloaded_dukeds_versions.json",
             workflow_output_json_path="/data/workflow_output.json",
         )
+        self.mock_input_file_versions_str = json.dumps({
+            "items": [
+                {"id": "222"},
+                {"id": "333"},
+                {"id": "444"},
+            ]
+        })
         self.mock_workflow_output_str = json.dumps({
             "one": {
                 "class": "File",
@@ -243,7 +246,10 @@ class TestDukeDSActivity(TestCase):
 
     @patch('lando_util.upload.click')
     def test_create_echos_progress(self, mock_click):
-        with patch("builtins.open", mock_open(read_data=self.mock_workflow_output_str)) as mock_file:
+        with patch("builtins.open", mock_open(read_data=self.mock_input_file_versions_str)) as mock_file:
+            handlers = (mock_file.return_value, mock_open(read_data=self.mock_workflow_output_str).return_value,)
+            mock_file.side_effect = handlers
+
             activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
             activity.create()
 
@@ -256,7 +262,10 @@ class TestDukeDSActivity(TestCase):
 
     @patch('lando_util.upload.click')
     def test_create_updates_dukeds(self, mock_click):
-        with patch("builtins.open", mock_open(read_data=self.mock_workflow_output_str)) as mock_file:
+        with patch("builtins.open", mock_open(read_data=self.mock_input_file_versions_str)) as mock_file:
+            handlers = (mock_file.return_value, mock_open(read_data=self.mock_workflow_output_str).return_value,)
+            mock_file.side_effect = handlers
+
             activity = DukeDSActivity(self.mock_dds_client, self.mock_settings, self.mock_project_info)
             activity.create()
 
