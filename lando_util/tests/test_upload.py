@@ -22,9 +22,6 @@ class TestSettings(TestCase):
                 "input_file_version_ids": [
                     "abd123",
                 ],
-                "output_file_paths": [
-                    "/data/results/output.txt"
-                ],
                 "workflow_output_json_path": "bespin-workflow-output.json"
             }
         }
