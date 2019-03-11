@@ -130,7 +130,7 @@ class UploadUtil(object):
         """
         Upload files from local paths to the specified project
         :param project: ddsc.sdk.client.Project: project to upload files to
-        :return: UploadedFileInfo: contains details about uploaded files
+        :return: UploadedFilesInfo: contains details about uploaded files
         """
         project_upload = ProjectUpload(self.dds_config,
                                        ProjectNameOrId.create_from_project_id(project.id),

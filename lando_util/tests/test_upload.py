@@ -95,15 +95,17 @@ class TestUploadUtil(TestCase):
 
     @patch('lando_util.upload.ProjectUpload')
     @patch('lando_util.upload.ProjectNameOrId')
+    @patch('lando_util.upload.UploadedFilesInfo')
     @patch('lando_util.upload.click')
-    def test_upload_files(self, mock_click, mock_project_name_or_id, mock_project_upload, mock_duke_ds_client,
+    def test_upload_files(self, mock_click, mock_uploaded_files_info, mock_project_name_or_id, mock_project_upload,
+                          mock_duke_ds_client,
                           mock_settings):
         util = UploadUtil(Mock())
         mock_project = Mock()
         mock_project.id = '123456'
         mock_project_upload.return_value.needs_to_upload.return_value = True
         mock_project_upload.return_value.get_differences_summary.return_value = 'There are 2 files to upload.'
-        local_project = util.upload_files(project=mock_project)
+        uploaded_files_info = util.upload_files(project=mock_project)
         mock_project_upload.assert_called_with(
             mock_duke_ds_client.return_value.dds_connection.config,
             mock_project_name_or_id.create_from_project_id.return_value,
@@ -114,6 +116,8 @@ class TestUploadUtil(TestCase):
             call('There are 2 files to upload.'),
             call('Uploading')
         ])
+        self.assertEqual(uploaded_files_info, mock_uploaded_files_info.return_value)
+        mock_uploaded_files_info.assert_called_with(mock_project_upload.return_value.local_project)
 
     @patch('lando_util.upload.ProjectUpload')
     @patch('lando_util.upload.click')
@@ -127,10 +131,10 @@ class TestUploadUtil(TestCase):
 
     @patch('lando_util.upload.DukeDSActivity')
     def test_create_provenance_activity(self, mock_duke_ds_activity, mock_duke_ds_client, mock_settings):
-        mock_project_info = Mock()
+        mock_uploaded_files_info = Mock()
         util = UploadUtil(Mock())
-        util.create_provenance_activity(mock_project_info)
-        mock_duke_ds_activity.assert_called_with(util.dds_client, util.settings, mock_project_info)
+        util.create_provenance_activity(mock_uploaded_files_info)
+        mock_duke_ds_activity.assert_called_with(util.dds_client, util.settings, mock_uploaded_files_info)
         mock_duke_ds_activity.return_value.create.assert_called_with()
 
     @patch('lando_util.upload.RemoteStore')
@@ -192,7 +196,7 @@ class TestMain(TestCase):
             mock_project, mock_outfile)
 
 
-class TestDukeDSProjectInfo(TestCase):
+class TestUploadedFilesInfo(TestCase):
     """
     Copied from https://github.com/Duke-GCB/lando/blob/76f981ebff4ae0abbabbc4461308e9e5ea0bc830/lando/worker/tests/
     test_provenance.py#L45
