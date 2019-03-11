@@ -36,3 +36,28 @@ The command will write out a json file with the resulting DukeDS project id and 
 ```
 python -m lando_util.upload <COMMAND_FILE> <OUTFILE>
 ```
+
+JSON command file:
+```
+{
+    "destination": "<project name>",
+    "readme_file_path": "<path to readme file>",
+    "paths": ["<Path to folder or file to upload>"],
+    "share": {
+        "dds_user_ids": ["<DukeDS user id to share with>"],
+        "auth_role": "<DukeDS auth role to grant to dds_user_ids users>",  // optional field
+        "user_message": "<Message to include in the share email>"  // optional field
+    },
+    "activity": {
+        "name": "<name of the activity to be created>",
+        "description": "<description of the activity>",
+        "started_on": "<datetime when activity started>",
+        "ended_on": "<datetime when activity ended>",
+        "input_file_version_ids": [
+            "<DukeDS file version id of input file used in activity>",
+        ],
+        "workflow_output_json_path": "<path to cwl runner stdout json file>"
+    }
+}
+```
+
