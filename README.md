@@ -20,7 +20,7 @@ Users must first create a json command file with a list of items to download.
 
 Run the download command:
 ```
-python -m lando_util.download <COMMAND_FILE> <DOWNLOADED_ITEMS_METADATA_FILE>
+python -m lando_util.download <COMMAND_FILE> [DOWNLOADED_ITEMS_METADATA_FILE]
 ```
 DOWNLOADED_ITEMS_METADATA_FILE is an optional argument that will save metadata about downloaded DukeDS files.
 
