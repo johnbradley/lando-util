@@ -20,8 +20,25 @@ Users must first create a json command file with a list of items to download.
 
 Run the download command:
 ```
-python -m lando_util.download <COMMAND_FILE>
+python -m lando_util.download <COMMAND_FILE> <DOWNLOADED_ITEMS_METADATA_FILE>
 ```
+DOWNLOADED_ITEMS_METADATA_FILE is an optional argument that will save metadata about downloaded DukeDS files.
+
+Example JSON command file:
+```
+{
+    "items": [
+        {"type": "DukeDS", "source": "<DukeDS file id>", "dest": "<path to save file to>"},
+        {"type": "url", "source": "<url of file to download>", "dest": "<path to save file to>"},
+        {"type": "write", "source": "<data to write>", "dest": "<path to write data to>"},
+    ]
+}
+```
+Supported values for type are:
+- DukeDS - The `source` field must be a DukeDS file UUID.
+- url - The `source` field must be a url of a file to download.
+- write - The `source` field must be data to be writen to a file.
+
 
 ## Organize Output Project
 Users must first create a json command file with settings to use when organizing the output project.
@@ -53,9 +70,7 @@ JSON command file:
         "description": "<description of the activity>",
         "started_on": "<datetime when activity started>",
         "ended_on": "<datetime when activity ended>",
-        "input_file_version_ids": [
-            "<DukeDS file version id of input file used in activity>",
-        ],
+        "input_file_versions_json_path": "<path to JSON file of metadata about files used in activity>",
         "workflow_output_json_path": "<path to cwl runner stdout json file>"
     }
 }
