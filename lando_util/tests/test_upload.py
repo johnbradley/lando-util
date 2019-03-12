@@ -222,9 +222,9 @@ class TestDukeDSActivity(TestCase):
         )
         self.mock_input_file_versions_str = json.dumps({
             "items": [
-                {"id": "222"},
-                {"id": "333"},
-                {"id": "444"},
+                {"current_version": {"id": "222"}},
+                {"current_version": {"id": "333"}},
+                {"current_version": {"id": "444"}},
             ]
         })
         self.mock_workflow_output_str = json.dumps({
