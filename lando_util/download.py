@@ -39,11 +39,10 @@ def download_files(dds_client, stage_items):
 
 
 def write_downloaded_metadata(outfile, downloaded_metadata_items):
-    if downloaded_metadata_items:
-        click.echo("Writing {} metadata items to {}.".format(len(downloaded_metadata_items), outfile.name))
-        outfile.write(json.dumps({
-            "items": downloaded_metadata_items
-        }))
+    click.echo("Writing {} metadata items to {}.".format(len(downloaded_metadata_items), outfile.name))
+    outfile.write(json.dumps({
+        "items": downloaded_metadata_items
+    }))
 
 
 @click.command()
