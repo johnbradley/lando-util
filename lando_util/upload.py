@@ -122,7 +122,7 @@ class DukeDSActivity(object):
     def _get_input_file_version_ids(self):
         with open(self.activity_settings.input_file_versions_json_path) as infile:
             data = json.load(infile)
-            return [file_version["id"] for file_version in data["items"]]
+            return [file_metadata["current_version"]["id"] for file_metadata in data["items"]]
 
     @staticmethod
     def _recursive_add_cwl_file_paths(dict_or_array, file_paths):

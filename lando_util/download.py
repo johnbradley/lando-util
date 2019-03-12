@@ -26,7 +26,7 @@ def download_files(dds_client, stage_items):
             click.echo("Downloading DukeDS file {} to {}.".format(source, dest))
             dds_file = dds_client.get_file_by_id(file_id=source)
             dds_file.download_to_path(dest)
-            downloaded_metadata_items.append(dds_file.current_version)
+            downloaded_metadata_items.append(dds_file._data_dict)
         elif type == "url":
             click.echo("Downloading URL {} to {}.".format(source, dest))
             urllib.request.urlretrieve(source, dest)
@@ -40,7 +40,7 @@ def download_files(dds_client, stage_items):
 
 def write_downloaded_metadata(outfile, downloaded_metadata_items):
     if downloaded_metadata_items:
-        click.echo("Writing downloaded metadata file with {} items.".format(len(downloaded_metadata_items)))
+        click.echo("Writing {} metadata items to {}.".format(len(downloaded_metadata_items), outfile.name))
         outfile.write(json.dumps({
             "items": downloaded_metadata_items
         }))
