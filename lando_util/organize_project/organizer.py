@@ -48,6 +48,7 @@ class Settings(object):
         self.bespin_workflow_stderr_path = data['bespin_workflow_stderr_path']  # path to stderr created by CWL runner
         self.bespin_workflow_started = data.get('bespin_workflow_started', '')  # workflow started running iso date
         self.bespin_workflow_finished = data.get('bespin_workflow_finished', '')  # workflow completed running iso date
+        self.additional_log_files = data.get('additional_log_files', [])  # additional files to be copied to /logs
 
     @property
     def docs_dir(self):
@@ -151,6 +152,11 @@ class Organizer(object):
         shutil.copy(self.settings.bespin_workflow_stdout_path, self.settings.bespin_workflow_stdout_dest_path)
         # copy docs/logs bespin workflow stderr
         shutil.copy(self.settings.bespin_workflow_stderr_path, self.settings.bespin_workflow_stderr_dest_path)
+
+        for log_file_source in self.settings.additional_log_files:
+            log_filename = os.path.basename(log_file_source)
+            log_file_dest = os.path.join(self.settings.logs_dir, log_filename)
+            shutil.copy(log_file_source, log_file_dest)
 
 
 @click.command()

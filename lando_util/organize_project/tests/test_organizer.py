@@ -1,7 +1,8 @@
 from unittest import TestCase
-from unittest.mock import patch, Mock, call, mock_open
+from unittest.mock import patch, Mock, call, mock_open, create_autospec
 from lando_util.organize_project.organizer import write_data_to_file, Settings, ProjectData, Organizer
 import json
+import os
 
 
 class TestOrganizerFuncs(TestCase):
@@ -25,6 +26,9 @@ class TestSettings(TestCase):
             "bespin_workflow_started": "2019-02-07T12:30",
             "bespin_workflow_finished": "2019-02-07T12:45",
             "methods_template": '#replace stuff',
+            "additional_log_files": [
+                "/bespin/output-data/job-51-bob-resource-usage.json",
+            ]
         }
 
     @patch('lando_util.organize_project.organizer.json')
@@ -43,6 +47,7 @@ class TestSettings(TestCase):
         self.assertEqual(settings.workflow_dest_path, 'somedir/docs/scripts/sort.cwl')
         self.assertEqual(settings.job_order_dest_path, 'somedir/docs/scripts/job_order.json')
         self.assertEqual(settings.bespin_workflow_elapsed_minutes, 15.0)
+        self.assertEqual(settings.additional_log_files, ["/bespin/output-data/job-51-bob-resource-usage.json"])
 
     @patch('lando_util.organize_project.organizer.json')
     def test_bespin_workflow_elapsed_minutes(self, mock_json):
@@ -111,6 +116,8 @@ class TestOrganizer(TestCase):
         mock_settings.bespin_workflow_started = '2019-02-07T12:30'
         mock_settings.bespin_workflow_finished = '2019-02-09T12:45'
         mock_settings.bespin_workflow_elapsed_minutes = '120'
+        mock_settings.logs_dir = '/results/docs/logs/'
+        mock_settings.additional_log_files = ['/tmp/extra/usage-report.txt', '/data/log2.txt']
         mock_settings.job_data = {}
         mock_project_data.return_value = Mock(
             methods_template='#Markdown',
@@ -118,6 +125,7 @@ class TestOrganizer(TestCase):
                 'id': '42',
             }
         )
+        mock_os.path = os.path
 
         organizer = Organizer(mock_settings)
         organizer.run()
@@ -132,7 +140,8 @@ class TestOrganizer(TestCase):
             call(mock_settings.job_order_path, mock_settings.job_order_dest_path),
             call(mock_settings.bespin_workflow_stdout_path, mock_settings.bespin_workflow_stdout_dest_path),
             call(mock_settings.bespin_workflow_stderr_path, mock_settings.bespin_workflow_stderr_dest_path),
-
+            call('/tmp/extra/usage-report.txt', '/results/docs/logs/usage-report.txt'),
+            call('/data/log2.txt', '/results/docs/logs/log2.txt'),
         ])
         project_data = mock_project_data.return_value
         mock_write_data_to_file.assert_has_calls([
