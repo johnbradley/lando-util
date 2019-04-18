@@ -265,5 +265,5 @@ def parse_yaml_or_json(path):
     Return parsed YAML or JSON for a path to a file.
     """
     with codecs.open(path, mode='r', encoding='utf-8') as infile:
-        doc = yaml.load(infile)
+        doc = yaml.safe_load(infile)
     return doc

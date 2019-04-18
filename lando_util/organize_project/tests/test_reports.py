@@ -5,7 +5,8 @@ https://github.com/Duke-GCB/lando/blob/cfb68f50298fbdff3d7df4db6c800e73063d8d25/
 """
 
 from unittest import TestCase
-from lando_util.organize_project.reports import ReadmeReport, get_documentation_str, create_workflow_info
+from lando_util.organize_project.reports import ReadmeReport, get_documentation_str, create_workflow_info, \
+    parse_yaml_or_json
 from unittest.mock import patch, MagicMock, mock_open, call
 
 SAMPLE_CWL_MAIN_DATA = {
@@ -226,6 +227,11 @@ class TestCwlReportUtilities(TestCase):
         self.assertEqual(2, len(workflow.input_params))
         self.assertEqual(4, len(workflow.output_data))
 
+    @patch("lando_util.organize_project.reports.codecs")
+    def test_parse_yaml_or_json(self, mock_codecs):
+        mock_codecs.open = mock_open(read_data='test: true')
+        result = parse_yaml_or_json(path='/fake/path.yml')
+        self.assertEqual(result, {"test": True})
 
 class TestWorkflowInfo(TestCase):
     @patch("lando_util.organize_project.reports.parse_yaml_or_json")
