@@ -20,6 +20,7 @@ class TestSettings(TestCase):
             "bespin_job_id": "1",
             "destination_dir": 'somedir',
             "workflow_path": '/workflow/sort.cwl',
+            "workflow_type": "packed",
             "job_order_path": '/output/job_order.json',
             "bespin_workflow_stdout_path": '/output/workflow-output.json',
             "bespin_workflow_stderr_path": '/output/workflow-output.log',
@@ -112,6 +113,7 @@ class TestOrganizer(TestCase):
     @patch('lando_util.organize_project.organizer.write_data_to_file')
     def test_run(self, mock_write_data_to_file, mock_project_data, mock_shutil, mock_os):
         mock_settings = Mock()
+        mock_settings.workflow_type = 'packed'
         mock_settings.bespin_job_id = '42'
         mock_settings.bespin_workflow_started = '2019-02-07T12:30'
         mock_settings.bespin_workflow_finished = '2019-02-09T12:45'

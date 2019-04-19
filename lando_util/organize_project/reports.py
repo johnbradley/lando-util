@@ -82,20 +82,23 @@ def get_documentation_str(node):
 
 def create_workflow_info(workflow_path):
     """
-    Create a workflow_info filling in data based on a packed cwl workflow.
+    Create a workflow_info filling in data based on a cwl workflow.
     :param workflow_path: str: packed cwl workflow
     :return: WorkflowInfo
     """
     doc = parse_yaml_or_json(workflow_path)
     cwl_version = doc.get('cwlVersion')
-    graph = doc.get("$graph")
-    if graph:
-        for node in graph:
-            if node.get("id") == "#main":
-                return WorkflowInfo(workflow_path, cwl_version, node)
-    if doc.get("id") == "#main":
+    if doc.get("class") == 'Workflow':
         return WorkflowInfo(workflow_path, cwl_version, doc)
-    raise ValueError("Unable to find #main in {}".format(workflow_path))
+    else:
+        graph = doc.get("$graph")
+        if graph:
+            for node in graph:
+                if node.get("id") == "#main":
+                    return WorkflowInfo(workflow_path, cwl_version, node)
+        if doc.get("id") == "#main":
+            return WorkflowInfo(workflow_path, cwl_version, doc)
+    raise ValueError("Unable to read {} as CWL".format(workflow_path))
 
 
 class WorkflowInfo(object):
