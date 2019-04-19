@@ -20,6 +20,7 @@ class TestSettings(TestCase):
             "bespin_job_id": "1",
             "destination_dir": 'somedir',
             "workflow_path": '/workflow/sort.cwl',
+            "workflow_to_read": '/workflow/read/sort.cwl',
             "workflow_type": "packed",
             "job_order_path": '/output/job_order.json',
             "bespin_workflow_stdout_path": '/output/workflow-output.json',

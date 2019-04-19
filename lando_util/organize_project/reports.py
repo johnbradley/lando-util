@@ -83,7 +83,7 @@ def get_documentation_str(node):
 def create_workflow_info(workflow_path):
     """
     Create a workflow_info filling in data based on a cwl workflow.
-    :param workflow_path: str: packed cwl workflow
+    :param workflow_path: str: cwl workflow file
     :return: WorkflowInfo
     """
     doc = parse_yaml_or_json(workflow_path)

@@ -44,6 +44,7 @@ class Settings(object):
         self.bespin_job_id = data['bespin_job_id']  # bespin job id of the job this output project is for
         self.destination_dir = data['destination_dir']  # directory where we will add files/folders
         self.workflow_path = data['workflow_path']  # path to downloaded workflow either a zip file or packed cwl
+        self.workflow_to_read = data['workflow_to_read']  # path to where the workflow main file can be read
         self.workflow_type = data['workflow_type']  # format of workflow file ('zipped' or 'packed')
         self.job_order_path = data['job_order_path']  # path to job order used when running the workflow
         self.bespin_workflow_stdout_path = data['bespin_workflow_stdout_path']  # path to stdout created by CWL runner
@@ -104,7 +105,7 @@ class Settings(object):
 
 class ProjectData(object):
     def __init__(self, settings):
-        self.workflow_info = create_workflow_info(workflow_path=settings.workflow_path)
+        self.workflow_info = create_workflow_info(settings.workflow_to_read)
         self.workflow_info.update_with_job_order(job_order_path=settings.job_order_path)
         self.workflow_info.update_with_job_output(job_output_path=settings.bespin_workflow_stdout_path)
         run_time = "{} minutes".format(settings.bespin_workflow_elapsed_minutes)
