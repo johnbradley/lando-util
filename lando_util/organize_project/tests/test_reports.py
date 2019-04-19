@@ -207,7 +207,7 @@ class TestCwlReportUtilities(TestCase):
         mock_parse_yaml_or_json.return_value = {}
         with self.assertRaises(ValueError) as err:
             create_workflow_info('/tmp/fakepath.cwl')
-        self.assertEqual("Unable to read /tmp/fakepath.cwl as CWL", str(err.exception))
+        self.assertEqual("Unable to find #main in /tmp/fakepath.cwl", str(err.exception))
 
     @patch("lando_util.organize_project.reports.parse_yaml_or_json")
     def test_create_workflow_info_with_top_level_graph(self, mock_parse_yaml_or_json):

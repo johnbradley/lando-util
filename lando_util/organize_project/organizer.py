@@ -18,7 +18,6 @@ results/           # this directory is uploaded in the store output stage (desti
 import os
 import json
 import shutil
-import zipfile
 import click
 import dateutil.parser
 from lando_util.organize_project.reports import ReadmeReport, create_workflow_info
@@ -43,8 +42,7 @@ class Settings(object):
         data = json.load(cmdfile)
         self.bespin_job_id = data['bespin_job_id']  # bespin job id of the job this output project is for
         self.destination_dir = data['destination_dir']  # directory where we will add files/folders
-        self.workflow_path = data['workflow_path']  # path to downloaded workflow either a zip file or packed cwl
-        self.workflow_type = data['workflow_type']  # format of workflow file ('zipped' or 'packed')
+        self.workflow_path = data['workflow_path']  # path to the workflow we ran
         self.job_order_path = data['job_order_path']  # path to job order used when running the workflow
         self.bespin_workflow_stdout_path = data['bespin_workflow_stdout_path']  # path to stdout created by CWL runner
         self.bespin_workflow_stderr_path = data['bespin_workflow_stderr_path']  # path to stderr created by CWL runner
@@ -147,13 +145,7 @@ class Organizer(object):
         )
 
         # copy docs/scripts cwl workflow file
-        if self.settings.workflow_type == 'packed':
-            shutil.copy(self.settings.workflow_path, self.settings.workflow_dest_path)
-        elif self.settings.workflow_type == 'zipped':
-            with zipfile.ZipFile(self.settings.workflow_path) as z:
-                z.extractall(self.settings.workflow_dest_path)
-        else:
-            raise ValueError("Unknown workflow type {}".format(self.settings.workflow_type))
+        shutil.copy(self.settings.workflow_path, self.settings.workflow_dest_path)
         # copy docs/scripts job order file
         shutil.copy(self.settings.job_order_path, self.settings.job_order_dest_path)
         # copy docs/logs bespin workflow stdout
