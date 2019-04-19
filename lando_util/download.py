@@ -1,6 +1,7 @@
 import click
 import json
 import os
+import zipfile
 import urllib.request
 from ddsc.sdk.client import Client as DukeDSClient
 
@@ -34,6 +35,12 @@ def download_files(dds_client, stage_items):
             click.echo("Writing file {}.".format(dest))
             with open(dest, 'w') as outfile:
                 outfile.write(source)
+        elif type == "unzip":
+            click.echo("Unzip file {} to {}.".format(source, dest))
+            with zipfile.ZipFile(source) as z:
+                z.extractall(dest)
+        else:
+            raise ValueError("Unsupported type {}".format(type))
     click.echo("Staging complete.".format(len(stage_items)))
     return downloaded_metadata_items
 
