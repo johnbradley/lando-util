@@ -6,8 +6,8 @@ https://github.com/Duke-GCB/lando/blob/cfb68f50298fbdff3d7df4db6c800e73063d8d25/
 
 from unittest import TestCase
 from lando_util.organize_project.reports import ReadmeReport, get_documentation_str, create_workflow_info, \
-    parse_yaml_or_json
-from unittest.mock import patch, MagicMock, mock_open, call
+    parse_yaml_or_json, upconvert_to_list
+from unittest.mock import patch, MagicMock, mock_open, Mock
 
 SAMPLE_CWL_MAIN_DATA = {
     'cwlVersion': 'v1.0',
@@ -48,6 +48,18 @@ SAMPLE_CWL_MAIN_DATA = {
             "id": "#main/bams_markduplicates_dir"
         },
     ],
+}
+
+SAMPLE_CWL_UNPACKED_WORKFLOW = {
+    'cwlVersion': 'v1.0',
+    'class': 'Workflow',
+    'inputs': {
+        'input1': 'File',
+        'input2': 'int'
+    },
+    'outputs': {
+        'output1': 'File'
+    }
 }
 
 SAMPLE_JOB_ORDER = {
@@ -227,11 +239,38 @@ class TestCwlReportUtilities(TestCase):
         self.assertEqual(2, len(workflow.input_params))
         self.assertEqual(4, len(workflow.output_data))
 
+    @patch("lando_util.organize_project.reports.parse_yaml_or_json")
+    def test_create_workflow_info_from_unpacked(self, mock_parse_yaml_or_json):
+        mock_parse_yaml_or_json.return_value = SAMPLE_CWL_UNPACKED_WORKFLOW
+        workflow = create_workflow_info('/tmp/fakepath.cwl')
+        self.assertEqual(2, len(workflow.input_params))
+        self.assertEqual(1, len(workflow.output_data))
+
     @patch("lando_util.organize_project.reports.codecs")
     def test_parse_yaml_or_json(self, mock_codecs):
         mock_codecs.open = mock_open(read_data='test: true')
         result = parse_yaml_or_json(path='/fake/path.yml')
         self.assertEqual(result, {"test": True})
+
+
+class UpconvertToListTestCase(TestCase):
+
+    def test_upconverts_dict(self):
+        inputs = {'input1': 'File'}
+        converted = upconvert_to_list(inputs)
+        self.assertEqual(converted, [{'id': 'input1', 'type': 'File'}])
+
+    def test_returns_list_unmodified(self):
+        inputs = [Mock(), Mock()]
+        converted = upconvert_to_list(inputs)
+        self.assertEqual(converted, inputs)
+
+    def test_raises_on_other(self):
+        inputs = {Mock}
+        with self.assertRaises(ValueError) as context:
+            upconvert_to_list(inputs)
+        self.assertIn('Only list or dict are supported', str(context.exception))
+
 
 class TestWorkflowInfo(TestCase):
     @patch("lando_util.organize_project.reports.parse_yaml_or_json")
