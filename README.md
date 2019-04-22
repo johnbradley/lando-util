@@ -1,6 +1,6 @@
 # lando-util
 Utilities used by [k8s.lando](https://github.com/Duke-GCB/lando/blob/master/lando/k8s/README.md) related to running a workflow.
-- download files from DukeDS, URLs, or with hard coded content
+- stage data from DukeDS, URLs, hard coded content, etc
 - organize output project directory
 - upload a directory to DukeDS
 
@@ -15,12 +15,12 @@ This logic was broken out of [lando_worker](https://github.com/Duke-GCB/lando/tr
 python setup.py install
 ```
 
-## Download Files
-Users must first create a json command file with a list of items to download.
+## Stage Data
+Users must first create a json command file with a list of items to stage.
 
-Run the download command:
+Run the stagedata command:
 ```
-python -m lando_util.download <COMMAND_FILE> [DOWNLOADED_ITEMS_METADATA_FILE]
+python -m lando_util.stagedata <COMMAND_FILE> [DOWNLOADED_ITEMS_METADATA_FILE]
 ```
 DOWNLOADED_ITEMS_METADATA_FILE is an optional argument that will save metadata about downloaded DukeDS files.
 
@@ -38,6 +38,7 @@ Supported values for type are:
 - DukeDS - The `source` field must be a DukeDS file UUID.
 - url - The `source` field must be a url of a file to download.
 - write - The `source` field must be data to be writen to a file.
+- unzip - Unzip `source` field to `dest`.
 
 
 ## Organize Output Project

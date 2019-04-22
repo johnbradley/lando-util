@@ -17,30 +17,30 @@ def get_stage_items(cmdfile):
     return items
 
 
-def download_files(dds_client, stage_items):
+def stage_data(dds_client, stage_items):
     downloaded_metadata_items = []
     click.echo("Staging {} items.".format(len(stage_items)))
-    for type, source, dest in stage_items:
+    for item_type, source, dest in stage_items:
         parent_directory = os.path.dirname(dest)
         os.makedirs(parent_directory, exist_ok=True)
-        if type == "DukeDS":
+        if item_type == "DukeDS":
             click.echo("Downloading DukeDS file {} to {}.".format(source, dest))
             dds_file = dds_client.get_file_by_id(file_id=source)
             dds_file.download_to_path(dest)
             downloaded_metadata_items.append(dds_file._data_dict)
-        elif type == "url":
+        elif item_type == "url":
             click.echo("Downloading URL {} to {}.".format(source, dest))
             urllib.request.urlretrieve(source, dest)
-        elif type == "write":
+        elif item_type == "write":
             click.echo("Writing file {}.".format(dest))
             with open(dest, 'w') as outfile:
                 outfile.write(source)
-        elif type == "unzip":
+        elif item_type == "unzip":
             click.echo("Unzip file {} to {}.".format(source, dest))
             with zipfile.ZipFile(source) as z:
                 z.extractall(dest)
         else:
-            raise ValueError("Unsupported type {}".format(type))
+            raise ValueError("Unsupported type {}".format(item_type))
     click.echo("Staging complete.".format(len(stage_items)))
     return downloaded_metadata_items
 
@@ -58,7 +58,7 @@ def write_downloaded_metadata(outfile, downloaded_metadata_items):
 def main(cmdfile, downloaded_metadata_file):
     dds_client = DukeDSClient()
     stage_items = get_stage_items(cmdfile)
-    downloaded_metadata_items = download_files(dds_client, stage_items)
+    downloaded_metadata_items = stage_data(dds_client, stage_items)
     if downloaded_metadata_file:
         write_downloaded_metadata(downloaded_metadata_file, downloaded_metadata_items)
 
