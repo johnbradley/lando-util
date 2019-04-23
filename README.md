@@ -29,7 +29,7 @@ Example JSON command file:
 {
     "items": [
         {"type": "DukeDS", "source": "<DukeDS file id>", "dest": "<path to save file to>"},
-        {"type": "url", "source": "<url of file to download>", "dest": "<path to save file to>"},
+        {"type": "url", "source": "<url of file to download>", "dest": "<path to save file to>", "unzip_to": "<path to unzip file to>"},
         {"type": "write", "source": "<data to write>", "dest": "<path to write data to>"},
     ]
 }
@@ -38,7 +38,8 @@ Supported values for type are:
 - DukeDS - The `source` field must be a DukeDS file UUID.
 - url - The `source` field must be a url of a file to download.
 - write - The `source` field must be data to be writen to a file.
-- unzip - Unzip `source` field to `dest`.
+
+All types have an optional `unzip_to` field to specify a location to unzip the dowloaded file to.
 
 
 ## Organize Output Project
