@@ -10,17 +10,18 @@ def get_stage_items(cmdfile):
     data = json.load(cmdfile)
     items = []
     for file_data in data['items']:
-        type = file_data['type']
+        item_type = file_data['type']
         source = file_data['source']
         dest = file_data['dest']
-        items.append((type, source, dest))
+        unzip_to = file_data.get('unzip_to')
+        items.append((item_type, source, dest, unzip_to))
     return items
 
 
 def stage_data(dds_client, stage_items):
     downloaded_metadata_items = []
     click.echo("Staging {} items.".format(len(stage_items)))
-    for item_type, source, dest in stage_items:
+    for item_type, source, dest, unzip_to in stage_items:
         parent_directory = os.path.dirname(dest)
         os.makedirs(parent_directory, exist_ok=True)
         if item_type == "DukeDS":
@@ -35,12 +36,12 @@ def stage_data(dds_client, stage_items):
             click.echo("Writing file {}.".format(dest))
             with open(dest, 'w') as outfile:
                 outfile.write(source)
-        elif item_type == "unzip":
-            click.echo("Unzip file {} to {}.".format(source, dest))
-            with zipfile.ZipFile(source) as z:
-                z.extractall(dest)
         else:
             raise ValueError("Unsupported type {}".format(item_type))
+        if unzip_to:
+            click.echo("Unzip file {} to {}.".format(dest, unzip_to))
+            with zipfile.ZipFile(dest) as z:
+                z.extractall(unzip_to)
     click.echo("Staging complete.".format(len(stage_items)))
     return downloaded_metadata_items
 

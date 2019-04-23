@@ -13,8 +13,7 @@ class TestDownloadFunctions(TestCase):
                 {"type": "DukeDS", "source": "123456", "dest": "/data/file1.dat"},
                 {"type": "url", "source": "someurl", "dest": "/data/file2.dat"},
                 {"type": "write", "source": "MYDATA:12", "dest": "/data/file3.dat"},
-                {"type": "url", "source": "myfile.zip", "dest": "/data/myfile.zip"},
-                {"type": "unzip", "source": "/data/myfile.zip", "dest": "/data"},
+                {"type": "url", "source": "myfile.zip", "dest": "/data/myfile.zip", "unzip_to": "/data"},
             ]
         }
         mock_cmdfile = Mock()
@@ -22,12 +21,11 @@ class TestDownloadFunctions(TestCase):
         result = get_stage_items(mock_cmdfile)
 
         mock_json.load.assert_called_with(mock_cmdfile)
-        self.assertEqual(len(result), 5)
-        self.assertEqual(result[0], ("DukeDS", "123456", "/data/file1.dat"))
-        self.assertEqual(result[1], ("url", "someurl", "/data/file2.dat"))
-        self.assertEqual(result[2], ("write", "MYDATA:12", "/data/file3.dat"))
-        self.assertEqual(result[3], ("url", "myfile.zip", "/data/myfile.zip"))
-        self.assertEqual(result[4], ("unzip", "/data/myfile.zip", "/data"))
+        self.assertEqual(len(result), 4)
+        self.assertEqual(result[0], ("DukeDS", "123456", "/data/file1.dat", None))
+        self.assertEqual(result[1], ("url", "someurl", "/data/file2.dat", None))
+        self.assertEqual(result[2], ("write", "MYDATA:12", "/data/file3.dat", None))
+        self.assertEqual(result[3], ("url", "myfile.zip", "/data/myfile.zip", "/data"))
 
     @patch("lando_util.stagedata.os")
     @patch("lando_util.stagedata.urllib")
@@ -39,17 +37,16 @@ class TestDownloadFunctions(TestCase):
         mock_dds_client = Mock()
         mock_dds_client.get_file_by_id.return_value = Mock(_data_dict={"current_version": {"id": "999"}})
         stage_items = [
-            ("DukeDS", "123456", "/data/file1.dat"),
-            ("url", "someurl", "/data/file2.dat"),
-            ("write", "MYDATA:12", "/data/file3.dat"),
-            ("url", "https://someurl/myfile.zip", "/data/myfile.zip"),
-            ("unzip", "/data/myfile.zip", "/data"),
+            ("DukeDS", "123456", "/data/file1.dat", None),
+            ("url", "someurl", "/data/file2.dat", None),
+            ("write", "MYDATA:12", "/data/file3.dat", None),
+            ("url", "https://someurl/myfile.zip", "/data/myfile.zip", "/data"),
         ]
 
         result = stage_data(mock_dds_client, stage_items)
 
         mock_click.echo.assert_has_calls([
-            call("Staging 5 items."),
+            call("Staging 4 items."),
             call("Downloading DukeDS file 123456 to /data/file1.dat."),
             call("Downloading URL someurl to /data/file2.dat."),
             call("Writing file /data/file3.dat."),
@@ -82,7 +79,7 @@ class TestDownloadFunctions(TestCase):
     def test_stage_data_with_unknown_type(self, mock_os):
         mock_dds_client = Mock()
         stage_items = [
-            ("faketype", "123456", "/data/file1.dat")
+            ("faketype", "123456", "/data/file1.dat", None)
         ]
         with self.assertRaises(ValueError) as raised_exception:
             stage_data(mock_dds_client, stage_items)

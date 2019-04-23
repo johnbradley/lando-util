@@ -80,25 +80,25 @@ def get_documentation_str(node):
     return documentation
 
 
-def create_workflow_info(workflow_path):
+def create_workflow_info(local_workflow_path):
     """
     Create a workflow_info filling in data based on a cwl workflow.
-    :param workflow_path: str: packed cwl workflow
+    :param local_workflow_path: str: packed cwl workflow
     :return: WorkflowInfo
     """
-    doc = parse_yaml_or_json(workflow_path)
+    doc = parse_yaml_or_json(local_workflow_path)
     cwl_version = doc.get('cwlVersion')
     if doc.get("class") == 'Workflow':
-        return WorkflowInfo(workflow_path, cwl_version, doc)
+        return WorkflowInfo(local_workflow_path, cwl_version, doc)
     else:
         graph = doc.get("$graph")
         if graph:
             for node in graph:
                 if node.get("id") == "#main":
-                    return WorkflowInfo(workflow_path, cwl_version, node)
+                    return WorkflowInfo(local_workflow_path, cwl_version, node)
         if doc.get("id") == "#main":
-            return WorkflowInfo(workflow_path, cwl_version, doc)
-    raise ValueError("Unable to read {} as CWL".format(workflow_path))
+            return WorkflowInfo(local_workflow_path, cwl_version, doc)
+    raise ValueError("Unable to read {} as CWL".format(local_workflow_path))
 
 
 def upconvert_to_list(list_or_dict):

@@ -43,7 +43,7 @@ class Settings(object):
         data = json.load(cmdfile)
         self.bespin_job_id = data['bespin_job_id']  # bespin job id of the job this output project is for
         self.destination_dir = data['destination_dir']  # directory where we will add files/folders
-        self.workflow_path = data['workflow_path']  # path to downloaded workflow either a zip file or packed cwl
+        self.downloaded_workflow_path = data['downloaded_workflow_path']  # path to downloaded workflow (zip/packed cwl)
         self.workflow_to_read = data['workflow_to_read']  # path to where the workflow main file can be read
         self.workflow_type = data['workflow_type']  # format of workflow file ('zipped' or 'packed')
         self.job_order_path = data['job_order_path']  # path to job order used when running the workflow
@@ -87,7 +87,7 @@ class Settings(object):
 
     @property
     def workflow_dest_path(self):
-        return os.path.join(self.scripts_dir, os.path.basename(self.workflow_path))
+        return os.path.join(self.scripts_dir, os.path.basename(self.downloaded_workflow_path))
 
     @property
     def job_order_dest_path(self):
@@ -149,9 +149,9 @@ class Organizer(object):
 
         # copy docs/scripts cwl workflow file
         if self.settings.workflow_type == 'packed':
-            shutil.copy(self.settings.workflow_path, self.settings.workflow_dest_path)
+            shutil.copy(self.settings.downloaded_workflow_path, self.settings.workflow_dest_path)
         elif self.settings.workflow_type == 'zipped':
-            with zipfile.ZipFile(self.settings.workflow_path) as z:
+            with zipfile.ZipFile(self.settings.downloaded_workflow_path) as z:
                 z.extractall(self.settings.workflow_dest_path)
         else:
             raise ValueError("Unknown workflow type {}".format(self.settings.workflow_type))

@@ -19,7 +19,7 @@ class TestSettings(TestCase):
         self.settings_packed_dict = {
             "bespin_job_id": "1",
             "destination_dir": 'somedir',
-            "workflow_path": '/workflow/sort.cwl',
+            "downloaded_workflow_path": '/workflow/sort.cwl',
             "workflow_to_read": '/workflow/read/sort.cwl',
             "workflow_type": "packed",
             "job_order_path": '/output/job_order.json',
@@ -35,7 +35,7 @@ class TestSettings(TestCase):
         self.settings_zipped_dict = {
             "bespin_job_id": "1",
             "destination_dir": 'somedir',
-            "workflow_path": '/workflow/sort.cwl',
+            "downloaded_workflow_path": '/workflow/sort.cwl',
             "workflow_to_read": '/workflow/read/sort.zip',
             "workflow_type": "zipped",
             "job_order_path": '/output/job_order.json',
@@ -66,7 +66,7 @@ class TestSettings(TestCase):
         self.assertEqual(settings.job_order_dest_path, 'somedir/docs/scripts/job_order.json')
         self.assertEqual(settings.bespin_workflow_elapsed_minutes, 15.0)
         self.assertEqual(settings.additional_log_files, ["/bespin/output-data/job-51-bob-resource-usage.json"])
-        self.assertEqual(settings.workflow_path, '/workflow/sort.cwl')
+        self.assertEqual(settings.downloaded_workflow_path, '/workflow/sort.cwl')
         self.assertEqual(settings.workflow_to_read, '/workflow/read/sort.cwl')
         self.assertEqual(settings.workflow_type, 'packed')
 
@@ -87,7 +87,7 @@ class TestSettings(TestCase):
         self.assertEqual(settings.job_order_dest_path, 'somedir/docs/scripts/job_order.json')
         self.assertEqual(settings.bespin_workflow_elapsed_minutes, 15.0)
         self.assertEqual(settings.additional_log_files, ["/bespin/output-data/job-51-bob-resource-usage.json"])
-        self.assertEqual(settings.workflow_path, '/workflow/sort.cwl')
+        self.assertEqual(settings.downloaded_workflow_path, '/workflow/sort.cwl')
         self.assertEqual(settings.workflow_to_read, '/workflow/read/sort.zip')
         self.assertEqual(settings.workflow_type, 'zipped')
 
@@ -120,7 +120,7 @@ class TestProjectData(TestCase):
             bespin_workflow_finished='2019-02-09T12:45',
             bespin_workflow_elapsed_minutes='120',
             workflow_to_read='/input/read/workflow.cwl',
-            workflow_path='/input/sort.cwl',
+            downloaded_workflow_path='/input/sort.cwl',
             job_order_path='/data/job_order.json',
             bespin_workflow_stdout_path='/output/workflow_stdout.json',
             methods_template='#Markdown'
@@ -181,7 +181,7 @@ class TestOrganizer(TestCase):
             call(exist_ok=True, name=mock_settings.logs_dir),
         ])
         mock_shutil.copy.assert_has_calls([
-            call(mock_settings.workflow_path, mock_settings.workflow_dest_path),
+            call(mock_settings.downloaded_workflow_path, mock_settings.workflow_dest_path),
             call(mock_settings.job_order_path, mock_settings.job_order_dest_path),
             call(mock_settings.bespin_workflow_stdout_path, mock_settings.bespin_workflow_stdout_dest_path),
             call(mock_settings.bespin_workflow_stderr_path, mock_settings.bespin_workflow_stderr_dest_path),
@@ -210,7 +210,7 @@ class TestOrganizer(TestCase):
         mock_settings.bespin_workflow_started = '2019-02-07T12:30'
         mock_settings.bespin_workflow_finished = '2019-02-09T12:45'
         mock_settings.bespin_workflow_elapsed_minutes = '120'
-        mock_settings.workflow_path = '/workflow/workflow.zip'
+        mock_settings.downloaded_workflow_path = '/workflow/workflow.zip'
         mock_settings.workflow_dest_path = '/workflow/outdir'
         mock_settings.logs_dir = '/results/docs/logs/'
         mock_settings.additional_log_files = ['/tmp/extra/usage-report.txt', '/data/log2.txt']
