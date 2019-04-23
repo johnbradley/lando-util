@@ -25,25 +25,43 @@ def stage_data(dds_client, stage_items):
         parent_directory = os.path.dirname(dest)
         os.makedirs(parent_directory, exist_ok=True)
         if item_type == "DukeDS":
-            click.echo("Downloading DukeDS file {} to {}.".format(source, dest))
-            dds_file = dds_client.get_file_by_id(file_id=source)
-            dds_file.download_to_path(dest)
-            downloaded_metadata_items.append(dds_file._data_dict)
+            metadata_item = download_dukeds_file(dds_client, source, dest)
+            downloaded_metadata_items.append(metadata_item)
         elif item_type == "url":
-            click.echo("Downloading URL {} to {}.".format(source, dest))
-            urllib.request.urlretrieve(source, dest)
+            download_url(source, dest)
         elif item_type == "write":
-            click.echo("Writing file {}.".format(dest))
-            with open(dest, 'w') as outfile:
-                outfile.write(source)
+            write_file(source, dest)
         else:
             raise ValueError("Unsupported type {}".format(item_type))
         if unzip_to:
-            click.echo("Unzip file {} to {}.".format(dest, unzip_to))
-            with zipfile.ZipFile(dest) as z:
-                z.extractall(unzip_to)
+            # if specified unzip downloaded file to `unzip_to` location
+            unzip(dest, unzip_to)
     click.echo("Staging complete.".format(len(stage_items)))
     return downloaded_metadata_items
+
+
+def download_dukeds_file(dds_client, source, dest):
+    click.echo("Downloading DukeDS file {} to {}.".format(source, dest))
+    dds_file = dds_client.get_file_by_id(file_id=source)
+    dds_file.download_to_path(dest)
+    return dds_file._data_dict
+
+
+def download_url(source, dest):
+    click.echo("Downloading URL {} to {}.".format(source, dest))
+    urllib.request.urlretrieve(source, dest)
+
+
+def write_file(source, dest):
+    click.echo("Writing file {}.".format(dest))
+    with open(dest, 'w') as outfile:
+        outfile.write(source)
+
+
+def unzip(source, dest):
+    click.echo("Unzip file {} to {}.".format(source, dest))
+    with zipfile.ZipFile(source) as z:
+        z.extractall(dest)
 
 
 def write_downloaded_metadata(outfile, downloaded_metadata_items):
