@@ -74,7 +74,7 @@ orbs:
               name: install python twine
               command: |
                 . venv/bin/activate
-                pip install twine
+                pip install twine wheel
           - run:
               name: verify git tag vs. version
               command: |
