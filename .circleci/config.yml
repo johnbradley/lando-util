@@ -56,7 +56,41 @@ orbs:
               install_command: <<parameters.install_command>>
           - run_tests:
               test_command: <<parameters.test_command>>
-
+      pypi:
+        docker:
+          - image: circleci/python:3.6
+        steps:
+          - checkout
+          - update_venv:
+              venv_checksum_filename: <<parameters.venv_checksum_filename>>
+              install_command: <<parameters.install_command>>
+          - run:
+              name: install python twine
+              command: |
+                pip install twine
+          - run:
+              name: verify git tag vs. version
+              command: |
+                python3 -m venv venv
+                . venv/bin/activate
+                python setup.py verify
+          - run:
+              name: create packages
+              command: |
+                . venv/bin/activate
+                python setup.py bdist_wheel --universal
+          - run:
+              name: init .pypirc
+              command: |
+                echo -e "[pypi]" >> ~/.pypirc
+                echo -e "username = $PYPI_USER" >> ~/.pypirc
+                echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
+                echo -e "repository: https://test.pypi.org/legacy/" >> ~/.pypirc
+          - run:
+              name: upload to pypi
+              command: |
+                . venv/bin/activate
+                twine upload dist/*
 version: 2.1
 workflows:
   main:
@@ -65,4 +99,13 @@ workflows:
           venv_checksum_filename: setup.py
           install_command: python setup.py install
           test_command: python setup.py test
-
+      - python/pypi:
+          venv_checksum_filename: setup.py
+          install_command: python setup.py install
+          requires:
+            - python/pytest
+          filters:
+            tags:
+              only: /[0-9]+(\.[0-9]+)*/
+            branches:
+              ignore: /.*/
