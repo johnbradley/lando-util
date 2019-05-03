@@ -73,11 +73,11 @@ orbs:
           - run:
               name: install python twine
               command: |
+                . venv/bin/activate
                 pip install twine
           - run:
               name: verify git tag vs. version
               command: |
-                python3 -m venv venv
                 . venv/bin/activate
                 python setup.py verify
           - run:
