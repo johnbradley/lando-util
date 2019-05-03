@@ -57,8 +57,14 @@ orbs:
           - run_tests:
               test_command: <<parameters.test_command>>
       pypi:
-        docker:
-          - image: circleci/python:3.6
+        parameters:
+          venv_checksum_filename:
+            description: Name of the file we checksum to save venv cache
+            type: string
+          install_command:
+            description: Command to run to install dependencies
+            type: string
+        executor: default
         steps:
           - checkout
           - update_venv:
