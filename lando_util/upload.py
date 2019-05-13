@@ -209,17 +209,29 @@ class UploadUtil(object):
         outfile.write(contents)
         outfile.close()
 
+    def create_json_project_details_file(self, project, outfile):
+        readme_file = project.get_child_for_path(self.settings.readme_file_path)
+        click.echo("Writing JSON project details project_id:{} readme_file_id:{} to {}".format(
+            project.id, readme_file.id, outfile.name))
+        outfile.write(json.dumps({
+            "project_id": project.id, "readme_file_id": readme_file.id
+        }))
+
 
 @click.command()
 @click.argument('cmdfile', type=click.File('r'))
 @click.argument('outfile', type=click.File('w'))
-def main(cmdfile, outfile):
+@click.option('--outfile-format', type=click.Choice(['annotate_script', 'json']), default='annotate_script')
+def main(cmdfile, outfile, outfile_format):
     util = UploadUtil(cmdfile)
     project = util.get_or_create_project()
     uploaded_files_info = util.upload_files(project)
     util.create_provenance_activity(uploaded_files_info)
     util.share_project(project)
-    util.create_annotate_project_details_script(project, outfile)
+    if outfile_format == 'annotate_script':
+        util.create_annotate_project_details_script(project, outfile)
+    elif outfile_format == 'json':
+        util.create_json_project_details_file(project, outfile)
 
 
 if __name__ == '__main__':

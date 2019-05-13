@@ -171,11 +171,11 @@ class TestUploadUtil(TestCase):
 
 class TestMain(TestCase):
     @patch('lando_util.upload.UploadUtil')
-    def test_main(self, mock_upload_util):
+    def test_main_outfile_annotate_script(self, mock_upload_util):
         mock_cmdfile = Mock()
         mock_outfile = Mock()
 
-        main.callback(mock_cmdfile, mock_outfile)
+        main.callback(mock_cmdfile, mock_outfile, "annotate_script")
 
         mock_upload_util.assert_called_with(mock_cmdfile)
         upload_util = mock_upload_util.return_value
@@ -187,6 +187,25 @@ class TestMain(TestCase):
         upload_util.share_project.assert_called_with(mock_project)
         upload_util.create_annotate_project_details_script.assert_called_with(
             mock_project, mock_outfile)
+        upload_util.create_json_project_details_file.assert_not_called()
+
+    @patch('lando_util.upload.UploadUtil')
+    def test_main_outfile_json(self, mock_upload_util):
+        mock_cmdfile = Mock()
+        mock_outfile = Mock()
+
+        main.callback(mock_cmdfile, mock_outfile, "json")
+
+        mock_upload_util.assert_called_with(mock_cmdfile)
+        upload_util = mock_upload_util.return_value
+        upload_util.get_or_create_project.assert_called_with()
+        mock_project = upload_util.get_or_create_project.return_value
+        upload_util.create_provenance_activity.assert_called_with(
+            upload_util.upload_files.return_value
+        )
+        upload_util.share_project.assert_called_with(mock_project)
+        upload_util.create_annotate_project_details_script.assert_not_called()
+        upload_util.create_json_project_details_file.assert_called_with(mock_project, mock_outfile)
 
 
 class TestUploadedFilesInfo(TestCase):
