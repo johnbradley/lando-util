@@ -168,6 +168,17 @@ class TestUploadUtil(TestCase):
         util.create_annotate_project_details_script(mock_project, mock_outfile)
         mock_outfile.write.assert_called_with('kubectl annotate pod $MY_POD_NAME project_id=888 readme_file_id=999')
 
+    def test_create_json_project_details_file(self, mock_duke_ds_client, mock_settings):
+        util = UploadUtil(Mock())
+        mock_project = Mock()
+        mock_project.id = '888'
+        mock_readme_file = Mock()
+        mock_readme_file.id = '999'
+        mock_project.get_child_for_path.return_value = mock_readme_file
+        mock_outfile = Mock()
+        util.create_json_project_details_file(mock_project, mock_outfile)
+        mock_outfile.write.assert_called_with(json.dumps({"project_id": "888", "readme_file_id": "999"}))
+
 
 class TestMain(TestCase):
     @patch('lando_util.upload.UploadUtil')
