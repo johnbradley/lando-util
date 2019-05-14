@@ -27,7 +27,7 @@ setup(name='lando-util',
       description='Utility functions for https://github.com/Duke-GCB/lando',
       url='http://github.com/Duke-GCB/lando-util',
       license='MIT',
-      packages=['lando_util'],
+      packages=['lando_util', 'lando_util.organize_project'],
       install_requires=[
           'click==7.0',
           'Jinja2==2.10.1',
